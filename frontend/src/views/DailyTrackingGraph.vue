@@ -114,13 +114,77 @@
             </v-col>
           </v-row>
 
+          <!-- Export buttons -->
+          <v-row class="mb-4">
+            <v-col cols="12">
+              <v-card outlined class="pa-3">
+                <v-card-title class="text-h6 font-weight-semibold pb-2">
+                  <v-icon left color="success">mdi-download</v-icon>
+                  ส่งออกกราฟ
+                </v-card-title>
+                <v-card-text class="pa-0">
+                  <v-row>
+                    <v-col cols="12" sm="6" md="4">
+                      <v-btn
+                        color="success"
+                        @click="exportAllCharts"
+                        block
+                        outlined
+                        :loading="exportingAll"
+                        :disabled="!filteredData.length"
+                      >
+                        <v-icon left>mdi-download-multiple</v-icon>
+                        ส่งออกทั้งหมด
+                      </v-btn>
+                    </v-col>
+                    <v-col cols="12" sm="6" md="4">
+                      <v-btn
+                        color="info"
+                        @click="exportAsPDF"
+                        block
+                        outlined
+                        :loading="exportingPDF"
+                        :disabled="!filteredData.length"
+                      >
+                        <v-icon left>mdi-file-pdf-box</v-icon>
+                        ส่งออกเป็น PDF
+                      </v-btn>
+                    </v-col>
+                    <v-col cols="12" sm="6" md="4">
+                      <v-btn
+                        color="secondary"
+                        @click="printCharts"
+                        block
+                        outlined
+                        :disabled="!filteredData.length"
+                      >
+                        <v-icon left>mdi-printer</v-icon>
+                        พิมพ์กราฟ
+                      </v-btn>
+                    </v-col>
+                  </v-row>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+
           <v-divider class="my-4"></v-divider>
 
           <v-row v-if="filteredData.length" class="flex-grow-1">
             <v-col cols="12" md="6" v-for="(chartConfig, index) in chartConfigs" :key="index" class="d-flex">
               <v-card class="mb-4 pa-4 rounded-lg elevation-2 flex-grow-1 chart-card">
-                <v-card-title class="text-h6 font-weight-semibold pb-2" :style="{ color: chartConfig.color }">
-                  {{ chartConfig.label }}
+                <v-card-title class="text-h6 font-weight-semibold pb-2 d-flex justify-space-between align-center" :style="{ color: chartConfig.color }">
+                  <span>{{ chartConfig.label }}</span>
+                  <v-btn
+                    icon
+                    small
+                    color="primary"
+                    @click="exportSingleChart(index)"
+                    :loading="exportingCharts[index]"
+                    class="export-btn"
+                  >
+                    <v-icon>mdi-download</v-icon>
+                  </v-btn>
                 </v-card-title>
                 <v-divider></v-divider>
                 <v-card-text class="pa-0 d-flex flex-column flex-grow-1">
@@ -146,6 +210,7 @@ import { ref, onMounted, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import Chart from 'chart.js/auto';
 import axios from 'axios';
+import JSZip from 'jszip';
 
 export default {
   name: 'DailyTrackingGraph',
@@ -199,6 +264,11 @@ export default {
 
     const chartInstances = ref([]);
     const chartRefs = [];
+
+    // Export states
+    const exportingAll = ref(false);
+    const exportingPDF = ref(false);
+    const exportingCharts = ref([]);
 
     const chartConfigs = [
       {
@@ -349,6 +419,265 @@ export default {
       nextTick(drawCharts);
     };
 
+    // Export functions
+    const exportSingleChart = async (index) => {
+      if (!chartInstances.value[index]) {
+        Swal.fire({
+          icon: 'error',
+          title: 'เกิดข้อผิดพลาด',
+          text: 'ไม่พบกราฟที่ต้องการส่งออก'
+        });
+        return;
+      }
+
+      exportingCharts.value[index] = true;
+      
+      try {
+        const chart = chartInstances.value[index];
+        const canvas = chart.canvas;
+        const link = document.createElement('a');
+        
+        // Create a temporary canvas with better quality
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCanvas.width = canvas.width * 2;
+        tempCanvas.height = canvas.height * 2;
+        tempCtx.scale(2, 2);
+        tempCtx.drawImage(canvas, 0, 0);
+        
+        link.download = `${chartConfigs[index].label}_${new Date().toISOString().split('T')[0]}.png`;
+        link.href = tempCanvas.toDataURL('image/png');
+        link.click();
+        
+        Swal.fire({
+          icon: 'success',
+          title: 'ส่งออกสำเร็จ',
+          text: `กราฟ ${chartConfigs[index].label} ถูกส่งออกแล้ว`
+        });
+      } catch (error) {
+        console.error('Export error:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'เกิดข้อผิดพลาด',
+          text: 'ไม่สามารถส่งออกกราฟได้'
+        });
+      } finally {
+        exportingCharts.value[index] = false;
+      }
+    };
+
+    const exportAllCharts = async () => {
+      exportingAll.value = true;
+      
+      try {
+        const zip = new JSZip();
+        const promises = chartInstances.value.map(async (chart, index) => {
+          if (!chart) return;
+          
+          const canvas = chart.canvas;
+          const tempCanvas = document.createElement('canvas');
+          const tempCtx = tempCanvas.getContext('2d');
+          tempCanvas.width = canvas.width * 2;
+          tempCanvas.height = canvas.height * 2;
+          tempCtx.scale(2, 2);
+          tempCtx.drawImage(canvas, 0, 0);
+          
+          const blob = await new Promise(resolve => {
+            tempCanvas.toBlob(resolve, 'image/png');
+          });
+          
+          zip.file(`${chartConfigs[index].label}_${new Date().toISOString().split('T')[0]}.png`, blob);
+        });
+        
+        await Promise.all(promises);
+        const content = await zip.generateAsync({ type: 'blob' });
+        
+        const link = document.createElement('a');
+        link.download = `health_charts_${new Date().toISOString().split('T')[0]}.zip`;
+        link.href = URL.createObjectURL(content);
+        link.click();
+        
+        Swal.fire({
+          icon: 'success',
+          title: 'ส่งออกสำเร็จ',
+          text: 'กราฟทั้งหมดถูกส่งออกแล้ว'
+        });
+      } catch (error) {
+        console.error('Export error:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'เกิดข้อผิดพลาด',
+          text: 'ไม่สามารถส่งออกกราฟได้'
+        });
+      } finally {
+        exportingAll.value = false;
+      }
+    };
+
+    const exportAsPDF = async () => {
+      exportingPDF.value = true;
+      
+      try {
+        // Simple PDF export using canvas
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 900;
+        canvas.height = 1400;
+        const paddingX = 60; // horizontal padding
+        const chartWidth = canvas.width - paddingX * 2;
+        const chartHeight = 160;
+        
+        // Set background
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw title with better styling
+        ctx.fillStyle = '#2c3e50';
+        ctx.font = 'bold 28px Arial';
+        ctx.fillText('รายงานข้อมูลสุขภาพ', paddingX, 60);
+        
+        ctx.fillStyle = '#7f8c8d';
+        ctx.font = '16px Arial';
+        ctx.fillText(`วันที่: ${new Date().toLocaleDateString('th-TH')}`, paddingX, 90);
+        
+        // Draw charts with better spacing
+        let yOffset = 130;
+        chartInstances.value.forEach((chart, index) => {
+          if (!chart) return;
+          
+          // Draw chart title
+          ctx.fillStyle = '#34495e';
+          ctx.font = 'bold 18px Arial';
+          ctx.fillText(chartConfigs[index].label, paddingX, yOffset);
+          
+          const chartCanvas = chart.canvas;
+          // Draw chart with horizontal padding
+          ctx.drawImage(chartCanvas, paddingX, yOffset + 10, chartWidth, chartHeight);
+          yOffset += chartHeight + 40;
+        });
+        
+        const link = document.createElement('a');
+        link.download = `health_report_${new Date().toISOString().split('T')[0]}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        
+        Swal.fire({
+          icon: 'success',
+          title: 'ส่งออกสำเร็จ',
+          text: 'รายงานถูกส่งออกแล้ว'
+        });
+      } catch (error) {
+        console.error('PDF export error:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'เกิดข้อผิดพลาด',
+          text: 'ไม่สามารถส่งออกเป็น PDF ได้'
+        });
+      } finally {
+        exportingPDF.value = false;
+      }
+    };
+
+    const printCharts = () => {
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>รายงานข้อมูลสุขภาพ</title>
+            <style>
+              body { 
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                margin: 0; 
+                padding: 20px; 
+                background-color: #f8f9fa;
+                color: #2c3e50;
+              }
+              .print-container {
+                max-width: 1200px;
+                margin: 0 auto;
+                background: white;
+                padding: 30px;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+              }
+              .header {
+                text-align: center;
+                margin-bottom: 30px;
+                padding-bottom: 20px;
+                border-bottom: 3px solid #3498db;
+              }
+              .header h1 {
+                color: #2c3e50;
+                margin: 0 0 10px 0;
+                font-size: 28px;
+                font-weight: bold;
+              }
+              .header p {
+                color: #7f8c8d;
+                margin: 0;
+                font-size: 16px;
+              }
+              .chart-container { 
+                margin-bottom: 40px; 
+                page-break-inside: avoid; 
+                padding: 20px;
+                border: 1px solid #e9ecef;
+                border-radius: 8px;
+                background: #fafbfc;
+              }
+              .chart-title { 
+                font-size: 20px; 
+                font-weight: bold; 
+                margin-bottom: 15px; 
+                color: #2c3e50;
+                padding: 10px 0;
+                border-bottom: 2px solid #3498db;
+              }
+              canvas { 
+                max-width: 100%; 
+                height: auto; 
+                border-radius: 4px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+              }
+              @media print {
+                body { background-color: white; }
+                .print-container { box-shadow: none; }
+                .chart-container { border: 1px solid #ddd; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="print-container">
+              <div class="header">
+                <h1>รายงานข้อมูลสุขภาพ</h1>
+                <p>วันที่: ${new Date().toLocaleDateString('th-TH')}</p>
+              </div>
+              ${chartInstances.value.map((chart, index) => `
+                <div class="chart-container">
+                  <div class="chart-title">${chartConfigs[index].label}</div>
+                  <canvas id="chart${index}"></canvas>
+                </div>
+              `).join('')}
+            </div>
+          </body>
+        </html>
+      `);
+      
+      // Copy charts to print window
+      setTimeout(() => {
+        chartInstances.value.forEach((chart, index) => {
+          if (chart) {
+            const printCanvas = printWindow.document.getElementById(`chart${index}`);
+            const printCtx = printCanvas.getContext('2d');
+            printCanvas.width = chart.canvas.width;
+            printCanvas.height = chart.canvas.height;
+            printCtx.drawImage(chart.canvas, 0, 0);
+          }
+        });
+        printWindow.print();
+      }, 500);
+    };
+
     onMounted(fetchData);
 
     return {
@@ -358,6 +687,9 @@ export default {
       filteredData,
       chartConfigs,
       chartRefs,
+      exportingAll,
+      exportingPDF,
+      exportingCharts,
 
       logout: () => {
         localStorage.removeItem('userToken');
@@ -369,6 +701,10 @@ export default {
       goToMapPage: () => router.push('/Map'),
       applyFilter,
       resetDates,
+      exportSingleChart,
+      exportAllCharts,
+      exportAsPDF,
+      printCharts,
     };
   },
 };
@@ -455,6 +791,117 @@ export default {
   min-height: 40px !important;
 }
 
+/* Export button styles */
+.export-btn {
+  transition: all 0.3s ease;
+  opacity: 0.7;
+}
+
+.export-btn:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.v-btn--outlined {
+  transition: all 0.3s ease;
+  border-width: 2px !important;
+}
+
+.v-btn--outlined:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Export section styling */
+.v-card--outlined {
+  border: 2px solid #e3f2fd !important;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.1) !important;
+}
+
+.v-card--outlined .v-card__title {
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+  color: white !important;
+  margin: -12px -12px 16px -12px;
+  padding: 20px 16px;
+  border-radius: 6px 6px 0 0;
+  box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+}
+
+.v-card--outlined .v-card__title .v-icon {
+  color: #ffffff !important;
+  margin-right: 8px;
+}
+
+/* Export button specific colors */
+.v-btn--outlined.v-btn--has-bg {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.v-btn--outlined.v-btn--has-bg:hover {
+  background-color: rgba(255, 255, 255, 1) !important;
+}
+
+/* Success button (Export All) */
+.v-btn--outlined.success--text {
+  border-color: #27ae60 !important;
+  color: #27ae60 !important;
+}
+
+.v-btn--outlined.success--text:hover {
+  background-color: #27ae60 !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+}
+
+/* Info button (PDF Export) */
+.v-btn--outlined.info--text {
+  border-color: #3498db !important;
+  color: #3498db !important;
+}
+
+.v-btn--outlined.info--text:hover {
+  background-color: #3498db !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+/* Secondary button (Print) */
+.v-btn--outlined.secondary--text {
+  border-color: #95a5a6 !important;
+  color: #95a5a6 !important;
+}
+
+.v-btn--outlined.secondary--text:hover {
+  background-color: #95a5a6 !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(149, 165, 166, 0.3);
+}
+
+/* Loading animation */
+.v-btn--loading {
+  position: relative;
+}
+
+.v-btn--loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 @media (max-width: 960px) {
   .v-toolbar__title {
     font-size: 1.1rem;
@@ -482,6 +929,12 @@ export default {
   
   .date-field {
     margin-bottom: 8px;
+  }
+  
+  /* Mobile export buttons */
+  .v-btn--outlined {
+    font-size: 0.9rem;
+    padding: 8px 12px;
   }
 }
 
@@ -522,6 +975,21 @@ export default {
   .v-col {
     padding: 4px;
   }
+  
+  /* Mobile export section */
+  .v-card--outlined .v-card__title {
+    font-size: 1rem;
+    padding: 12px 8px;
+  }
+  
+  .export-btn {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .export-btn .v-icon {
+    font-size: 16px;
+  }
 }
 
 @media (max-width: 375px) {
@@ -539,6 +1007,21 @@ export default {
   
   .v-col {
     padding: 2px;
+  }
+  
+  /* Small mobile export buttons */
+  .v-btn--outlined {
+    font-size: 0.8rem;
+    padding: 6px 8px;
+  }
+  
+  .export-btn {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .export-btn .v-icon {
+    font-size: 14px;
   }
 }
 </style>

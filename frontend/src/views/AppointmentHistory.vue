@@ -67,8 +67,14 @@
     <v-main>
       <v-container class="mt-6">
         <v-card class="pa-5">
-          <v-card-title class="text-h6">
-            ประวัติการนัดหมายทั้งหมด
+          <v-card-title class="text-h6 d-flex justify-space-between align-center">
+            <span>ประวัติการนัดหมายทั้งหมด</span>
+            <div>
+              <v-btn color="#3B5F6D" dark @click="exportAppointmentsCSV" :disabled="filteredAppointments.length === 0" class="ml-2">
+                <v-icon left>mdi-file-delimited</v-icon>
+                ส่งออก CSV
+              </v-btn>
+            </div>
           </v-card-title>
           <v-text-field
             v-model="search"
@@ -115,6 +121,8 @@
 <script>
 import Swal from 'sweetalert2'
 import axios from 'axios';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default {
   name: 'AppointmentHistory',
@@ -214,7 +222,34 @@ export default {
     logout() { localStorage.removeItem('userToken'); localStorage.removeItem('userData'); this.$router.push('/'); },
     goToAddPatient() { this.$router.push('/Addpatient'); },
     goToPatientInfo() { this.$router.push('/patientinfo'); },
-    goToMapPage() { this.$router.push('/Map'); }
+    goToMapPage() { this.$router.push('/Map'); },
+  
+    exportAppointmentsCSV() {
+      const headers = this.headers.map(h => h.text);
+      const rows = this.filteredAppointments.map(item => [
+        item.appointment_date ? "'" + (new Date(item.appointment_date).toISOString().slice(0, 10)) + "'" : '',
+        item.appointment_time ? item.appointment_time.substring(0, 5) + ' น.' : 'N/A',
+        item.reason || '-',
+        item.appointed_by || '-',
+        item.contact_location || '-',
+        item.other_details || '-',
+        item.diagnosis || '-',
+        item.status || '-',
+      ]);
+      let csvContent = '';
+      csvContent += '\uFEFF' + headers.join(',') + '\n';
+      rows.forEach(row => {
+        const safeRow = row.map(cell => '"' + String(cell).replace(/"/g, '""') + '"');
+        csvContent += safeRow.join(',') + '\n';
+      });
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute('download', 'appointment-history.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    },
   },
 };
 </script>

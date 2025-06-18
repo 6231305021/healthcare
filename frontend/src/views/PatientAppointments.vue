@@ -212,7 +212,13 @@
 
 
         <v-card class="mt-6 pa-5">
-          <v-card-title class="text-h6">ประวัติการนัดหมาย</v-card-title>
+          <v-card-title class="text-h6 d-flex justify-space-between align-center">
+            <span>ประวัติการนัดหมาย</span>
+            <v-btn color="#3B5F6D" dark @click="openExportDialog" :disabled="appointmentHistory.length === 0">
+              <v-icon left>mdi-printer</v-icon>
+              ส่งออกใบนัด
+            </v-btn>
+          </v-card-title>
           <v-data-table
             :headers="headers"
             :items="appointmentHistory"
@@ -239,6 +245,30 @@
             </template>
           </v-data-table>
         </v-card>
+        <!-- Dialog สำหรับเลือกนัดหมายที่จะส่งออก -->
+        <v-dialog v-model="exportDialog" max-width="600px">
+          <v-card>
+            <v-card-title class="text-h6">เลือกนัดหมายที่ต้องการส่งออกใบนัด</v-card-title>
+            <v-card-text>
+              <v-select
+                v-model="selectedAppointmentId"
+                :items="appointmentHistory.map(a => ({ title: `HN: ${a.hn_number || '-' } - วันที่: ${formatDate(a.appointment_date)}`, value: a.id }))"
+                label="เลือกนัดหมาย"
+                item-title="title"
+                item-value="value"
+                outlined
+              />
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer />
+              <v-btn text @click="exportDialog = false">ยกเลิก</v-btn>
+              <v-btn color="#3B5F6D" dark @click="exportAppointmentPDF" :disabled="!selectedAppointmentId">
+                <v-icon left>mdi-printer</v-icon>
+                ส่งออก
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
       </v-container>
     </v-main>
   </v-app>
@@ -248,6 +278,8 @@
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import Chart from 'chart.js/auto';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 export default {
   name: 'PatientAppointments',
@@ -264,7 +296,7 @@ export default {
         contact_location: null,
         other_details: null,
         diagnosis: null,
-        status: 'รอนัด',
+        status: 'นัดหมาย',
       },
       patientId: null,
       datePicker: new Date().toISOString().substr(0, 10),
@@ -294,6 +326,8 @@ export default {
         'ส่งต่อรักษา': '#2196F3',
         'รอนัด': '#FF9800',
       },
+      exportDialog: false,
+      selectedAppointmentId: null,
     };
   },
   mounted() {
@@ -648,6 +682,98 @@ export default {
     },
     goToMapPage() {
       this.$router.push('/Map');
+    },
+    openExportDialog() {
+      this.selectedAppointmentId = null;
+      this.exportDialog = true;
+    },
+    exportAppointmentPDF() {
+      const appointment = this.appointmentHistory.find(a => a.id === this.selectedAppointmentId);
+      if (!appointment) {
+        this.$swal({
+          title: 'ไม่พบข้อมูล',
+          text: 'ไม่สามารถดึงข้อมูลนัดหมายได้',
+          icon: 'error',
+        });
+        return;
+      }
+      // เตรียมข้อมูลสำหรับ PDF
+      const patientName = this.patientName;
+      const hn = appointment.hn_number || '-';
+      const rights = appointment.rights || '-';
+      const dateThai = this.formatThaiDate(appointment.appointment_date);
+      const timeThai = this.formatThaiTime(appointment.appointment_time);
+      const reason = appointment.reason || '-';
+      const doctor = appointment.appointed_by || '-';
+      const contact = appointment.contact_location || '-';
+      const lab = appointment.other_details || '-';
+      const diagnosis = appointment.diagnosis || '-';
+      const status = appointment.status || '-';
+      // ฟอร์ม HTML ชั่วคราวสำหรับแปลงเป็น PDF
+      const html = `
+        <div style="font-family: 'Sarabun', Arial, sans-serif; padding: 24px; width: 700px;">
+          <div style="font-size: 2.2rem; font-weight: bold; margin-bottom: 8px; border-bottom: 3px solid #222; display:inline-block;">ใบนัด</div>
+          <div style="margin-top: 16px; font-size: 1.2rem;">
+            <b>ชื่อ-นามสกุล</b> ${patientName} &nbsp;&nbsp; <b>HN</b> ${hn}<br/>
+            <b>สิทธิการรักษา</b> ${rights}<br/>
+            <b>วันที่นัด</b> ${dateThai} &nbsp;&nbsp; <b>เวลา</b> ${timeThai}<br/>
+            <b>เหตุผลการนัด</b> ${reason} &nbsp;&nbsp; <b>แพทย์ผู้นัด</b> ${doctor}<br/>
+            <b>สถานที่ติดต่อ</b> ${contact}<br/>
+            <hr style="margin: 16px 0; border: 1px solid #222;"/>
+            <b>LAB/X-Ray/การตรวจอื่น ๆ</b><br/>
+            ${lab}<br/>
+            <br/>
+            <b>วินิจฉัย</b> ${diagnosis}<br/>
+            <br/>
+            <div style="text-align: right; margin-top: 32px;">ผู้ออกใบนัด .......................................</div>
+          </div>
+        </div>
+      `;
+      // สร้าง element ชั่วคราว
+      const el = document.createElement('div');
+      el.innerHTML = html;
+      el.style.position = 'fixed';
+      el.style.left = '-9999px';
+      document.body.appendChild(el);
+      this.exportDialog = false;
+      setTimeout(() => {
+        html2canvas(el, { scale: 2 }).then(canvas => {
+          const imgData = canvas.toDataURL('image/png');
+          const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [canvas.width, canvas.height] });
+          pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+          pdf.save('appointment-slip.pdf');
+          document.body.removeChild(el);
+        }).catch(() => {
+          document.body.removeChild(el);
+          this.$swal({
+            title: 'เกิดข้อผิดพลาด',
+            text: 'ไม่สามารถสร้าง PDF ได้',
+            icon: 'error',
+          });
+        });
+      }, 200);
+    },
+    formatDate(dateStr) {
+      if (!dateStr) return '-';
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('th-TH');
+    },
+    formatThaiDate(dateStr) {
+      if (!dateStr) return '-';
+      const d = new Date(dateStr);
+      const months = [
+        'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+        'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+      ];
+      const day = d.getDate();
+      const month = months[d.getMonth()];
+      const year = d.getFullYear() + 543;
+      return `${day} ${month} พ.ศ. ${year}`;
+    },
+    formatThaiTime(timeStr) {
+      if (!timeStr) return '-';
+      const [h, m] = timeStr.split(':');
+      return `${h}:${m} น.`;
     },
   },
 };
