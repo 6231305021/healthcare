@@ -235,6 +235,13 @@
             <template v-slot:item.actions="{ item }">
               <v-icon
                 small
+                class="mr-2"
+                @click="openEditDialog(item)"
+              >
+                mdi-pencil
+              </v-icon>
+              <v-icon
+                small
                 @click="deleteAppointment(item.id)"
               >
                 mdi-delete
@@ -269,6 +276,55 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
+        <v-dialog v-model="editDialog" max-width="600px">
+          <v-card>
+            <v-card-title class="text-h6">แก้ไขการนัดหมาย</v-card-title>
+            <v-card-text>
+              <v-form ref="editAppointmentForm" v-model="editValid" lazy-validation>
+                <v-row>
+                  <v-col cols="12" md="6">
+                    <v-text-field v-model="editAppointment.hn_number" label="หมายเลข HN" prepend-icon="mdi-identifier" :rules="[v => !!v || 'กรุณากรอกหมายเลข HN']" required />
+                  </v-col>
+                  <v-col cols="12" md="6">
+                    <v-text-field v-model="editAppointment.rights" label="สิทธิการรักษา" prepend-icon="mdi-shield-account" :rules="[v => !!v || 'กรุณากรอกสิทธิการรักษา']" required />
+                  </v-col>
+                  <v-col cols="12" sm="6" md="6">
+                    <v-text-field v-model="editAppointment.appointment_date" label="วันที่นัดหมาย" prepend-icon="mdi-calendar" :rules="[v => !!v || 'กรุณาใส่วันที่นัดหมาย']" required outlined dense type="date" />
+                  </v-col>
+                  <v-col cols="12" sm="6" md="6">
+                    <v-text-field v-model="editAppointment.appointment_time" label="เวลานัดหมาย" prepend-icon="mdi-clock" :rules="[v => !!v || 'กรุณาใส่เวลานัดหมาย']" required outlined dense type="time" />
+                  </v-col>
+                  <v-col cols="12" md="6">
+                    <v-text-field v-model="editAppointment.reason" label="เหตุผลการนัดหมาย" prepend-icon="mdi-text-box-outline" />
+                  </v-col>
+                  <v-col cols="12" md="6">
+                    <v-text-field v-model="editAppointment.appointed_by" label="แพทย์ผู้นัด / ผู้บันทึกนัด" prepend-icon="mdi-medical-bag" />
+                  </v-col>
+                  <v-col cols="12" md="6">
+                    <v-text-field v-model="editAppointment.contact_location" label="สถานที่ติดต่อ" prepend-icon="mdi-map-marker-radius" />
+                  </v-col>
+                  <v-col cols="12" md="6">
+                    <v-text-field v-model="editAppointment.diagnosis" label="วินิจฉัย" prepend-icon="mdi-stethoscope" />
+                  </v-col>
+                  <v-col cols="12" md="6">
+                    <v-text-field v-model="editAppointment.other_details" label="รายละเอียดอื่นๆ (เช่น LAB/X-Ray)" prepend-icon="mdi-note-text-outline" />
+                  </v-col>
+                  <v-col cols="12" md="6">
+                    <v-select v-model="editAppointment.status" :items="statusOptions" label="สถานะการนัดหมาย" prepend-icon="mdi-check-circle-outline" :rules="[v => !!v || 'กรุณาเลือกสถานะ']" required />
+                  </v-col>
+                </v-row>
+              </v-form>
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer />
+              <v-btn text @click="editDialog = false">ยกเลิก</v-btn>
+              <v-btn color="#3B5F6D" dark @click="saveEditAppointment" :loading="editLoading" :disabled="!editValid">
+                <v-icon left>mdi-content-save</v-icon>
+                บันทึก
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
       </v-container>
     </v-main>
   </v-app>
@@ -296,7 +352,7 @@ export default {
         contact_location: null,
         other_details: null,
         diagnosis: null,
-        status: 'นัดหมาย',
+        status: 'มาตามนัด',
       },
       patientId: null,
       datePicker: new Date().toISOString().substr(0, 10),
@@ -328,6 +384,10 @@ export default {
       },
       exportDialog: false,
       selectedAppointmentId: null,
+      editDialog: false,
+      editAppointment: {},
+      editValid: false,
+      editLoading: false,
     };
   },
   mounted() {
@@ -774,6 +834,35 @@ export default {
       if (!timeStr) return '-';
       const [h, m] = timeStr.split(':');
       return `${h}:${m} น.`;
+    },
+    openEditDialog(item) {
+      this.editAppointment = { ...item };
+      this.editDialog = true;
+      this.$nextTick(() => {
+        if (this.$refs.editAppointmentForm) {
+          this.$refs.editAppointmentForm.resetValidation();
+          this.$refs.editAppointmentForm.validate();
+        }
+      });
+    },
+    async saveEditAppointment() {
+      if (!this.$refs.editAppointmentForm.validate()) return;
+      this.editLoading = true;
+      try {
+        const token = localStorage.getItem('userToken');
+        const headers = token ? { 'x-auth-token': token } : {};
+        const payload = { ...this.editAppointment };
+        await axios.put(`http://localhost:3001/api/appointments/${payload.id}`, payload, { headers });
+        this.editDialog = false;
+        await this.fetchAppointments(this.patientId);
+        this.$nextTick(() => { this.updateChart(); });
+        this.$emit('update');
+        await Swal.fire({ title: 'สำเร็จ', text: 'แก้ไขการนัดหมายเรียบร้อยแล้ว', icon: 'success' });
+      } catch (error) {
+        await Swal.fire({ title: 'ผิดพลาด', text: 'ไม่สามารถแก้ไขการนัดหมายได้', icon: 'error' });
+      } finally {
+        this.editLoading = false;
+      }
     },
   },
 };

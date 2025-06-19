@@ -161,7 +161,7 @@ router.put('/:id', upload.single('patientImage'), async (req, res) => {
                     fs.unlinkSync(oldImagePath);
                 }
             }
-            imagePath = req.file.path;
+            imagePath = formatImagePath(req.file);
         }
 
         const [result] = await db.execute(

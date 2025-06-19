@@ -29,6 +29,43 @@ router.get('/patient/:patientId', async (req, res) => {
   }
 });
 
+router.put('/:id', async (req, res) => {
+  const { id } = req.params;
+  const {
+    hn_number,
+    rights,
+    appointment_date,
+    appointment_time,
+    reason,
+    appointed_by,
+    contact_location,
+    other_details,
+    diagnosis,
+    status
+  } = req.body;
+
+  // Basic validation
+  if (!hn_number || !rights || !appointment_date || !appointment_time || !status) {
+    return res.status(400).json({ message: 'Missing required appointment fields.' });
+  }
+
+  try {
+    const [result] = await db.execute(
+      `UPDATE appointments SET
+        hn_number = ?, rights = ?, appointment_date = ?, appointment_time = ?, reason = ?, appointed_by = ?, contact_location = ?, other_details = ?, diagnosis = ?, status = ?
+      WHERE id = ?`,
+      [hn_number, rights, appointment_date, appointment_time, reason, appointed_by, contact_location, other_details, diagnosis, status, id]
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Appointment not found' });
+    }
+    res.json({ message: 'Appointment updated successfully' });
+  } catch (error) {
+    console.error('Error updating appointment:', error);
+    res.status(500).json({ message: 'Server error updating appointment', error: error.message });
+  }
+});
+
 // POST a new appointment
 // Endpoint: POST /api/appointments
 router.post('/', async (req, res) => {
