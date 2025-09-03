@@ -1,25 +1,27 @@
-const express = require('express');
-const pool = require('./db');
-require('dotenv').config();
+const mysql = require("mysql2");
 
-const app = express();
-app.use(express.json());
+// Convert port เป็น number
+const dbPort = parseInt(process.env.DB_PORT, 10);
 
-app.get('/', (req, res) => {
-  res.send('🚀 Backend running on Railway!');
+const db = mysql.createConnection({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  port: dbPort
 });
 
-app.get('/users', async (req, res) => {
-  try {
-    const [rows] = await pool.query('SELECT * FROM users'); // ตาราง users ต้องมีใน DB
-    res.json(rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error fetching users");
+db.connect((err) => {
+  if (err) {
+    console.error("❌ MySQL Connection Failed:", err);
+  } else {
+    console.log("✅ MySQL Connected!");
   }
 });
 
+// Example: start server
+const express = require("express");
+const app = express();
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
