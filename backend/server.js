@@ -1,5 +1,5 @@
 // โหลดค่า environment variables
-require('dotenv').config();
+require('dotenv').config(); // โหลด .env
 
 const express = require('express');
 const mysql = require('mysql2');
