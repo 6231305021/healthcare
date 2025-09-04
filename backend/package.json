@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "dev": "nodemon server.js",
-    "start": "node server.js",
+    "start": "node server.cjs",
     "build:linux": "cd ../frontend && npm install && npm run build && rm -rf ../backend/dist && cp -r dist ../backend/",
     "build:win": "cd ..\\frontend && npm install && npm run build && if exist ..\\backend\\dist rmdir /s /q ..\\backend\\dist && xcopy /e /i /y dist ..\\backend\\dist",
     "build": "if exist /C/Windows (npm run build:win) else (npm run build:linux)"
