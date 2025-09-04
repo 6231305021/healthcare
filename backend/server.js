@@ -1,5 +1,5 @@
 // โหลดค่า environment variables
-require('dotenv').config(); // โหลด .env
+require('dotenv').config(); 
 
 const express = require('express');
 const mysql = require('mysql2');
@@ -30,17 +30,15 @@ db.connect((err) => {
 // Middleware สำหรับ parse JSON
 app.use(express.json());
 
-// ตัวอย่าง route
+// Route ตัวอย่าง
 app.get('/', (req, res) => {
   res.send('Backend is running!');
 });
 
-// ตัวอย่าง API แสดง table patients
+// API แสดง table patients
 app.get('/api/patients', (req, res) => {
   db.query('SELECT * FROM patients', (err, results) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
+    if (err) return res.status(500).json({ error: err.message });
     res.json(results);
   });
 });
