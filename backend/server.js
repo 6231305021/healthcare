@@ -1,13 +1,22 @@
 import express from "express";
-import mysql from "mysql2";
 import dotenv from "dotenv";
+import mysql from "mysql2";
+import cors from "cors";
+import helmet from "helmet";
+import bodyParser from "body-parser";
+import cookieParser from "cookie-parser";
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 8080;
 
-// MySQL Connection
+// Middleware
+app.use(cors());
+app.use(helmet());
+app.use(bodyParser.json());
+app.use(cookieParser());
+
+// Database connection
 const db = mysql.createConnection({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -19,16 +28,18 @@ const db = mysql.createConnection({
 db.connect((err) => {
   if (err) {
     console.error("❌ MySQL Connection Failed:", err);
-    return;
+  } else {
+    console.log("✅ MySQL Connected!");
   }
-  console.log("✅ MySQL Connected!");
 });
 
-// Simple test route
+// Example route
 app.get("/", (req, res) => {
-  res.send("Server is running!");
+  res.send("Backend is running!");
 });
 
+// Start server
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
