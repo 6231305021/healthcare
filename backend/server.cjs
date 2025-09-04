@@ -1,60 +1,43 @@
-require("dotenv").config();
+// server.cjs
 const express = require("express");
 const mysql = require("mysql2");
-const cors = require("cors");
 const path = require("path");
+const cors = require("cors");
+require("dotenv").config();
 
 const app = express();
-
-// Allow frontend เรียก API
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
-// เชื่อม MySQL
+// MySQL connection
 const db = mysql.createConnection({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  port: process.env.DB_PORT,
+  port: process.env.DB_PORT || 3306,
 });
 
 db.connect((err) => {
-  if (err) {
-    console.error("❌ Database connection failed:", err.message);
-  } else {
-    console.log("✅ Connected to Railway MySQL");
-  }
+  if (err) console.error("❌ MySQL connection error:", err);
+  else console.log("✅ Connected to MySQL!");
 });
 
-// =====================
-// Serve Frontend (dist)
-// =====================
+// Serve frontend dist
 const distPath = path.join(__dirname, "dist");
 app.use(express.static(distPath));
-
 app.get("/", (req, res) => {
   res.sendFile(path.join(distPath, "index.html"));
 });
 
-// =====================
-// API Routes
-// =====================
+// Example API
 app.get("/api", (req, res) => {
-  res.json({ message: "🚀 Backend API connected!" });
-});
-
-app.get("/api/users", (req, res) => {
-  db.query("SELECT * FROM users", (err, results) => {
+  db.query("SELECT NOW() AS now", (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
-    res.json(results);
+    res.json({ message: "🚀 Backend API connected!", time: results[0].now });
   });
 });
 
-// =====================
-// Run Server
-// =====================
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+// Start server
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, "0.0.0.0", () => console.log(`🚀 Server running on port ${PORT}`));
