@@ -11,11 +11,11 @@ app.use(express.json());
 
 // MySQL connection
 const db = mysql.createConnection({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
- port: process.env.DB_PORT || 3306 // ต้องใส่
+  host: process.env.DB_HOST || "mysql.railway.internal",
+  user: process.env.DB_USER || "root",
+  password: process.env.DB_PASSWORD || "iuGIxHXlzLxiJkgZzlwrtEdrvgXaXcuS",
+  database: process.env.DB_NAME || "railway",
+  port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 3306,
 });
 
 db.connect((err) => {
@@ -42,5 +42,5 @@ app.get("/api", (req, res) => {
 });
 
 // Start server
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, "0.0.0.0", () => console.log(`🚀 Server running on port ${PORT}`));
