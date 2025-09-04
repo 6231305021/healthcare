@@ -1,3 +1,4 @@
+SET NAMES utf8mb4;
 -- phpMyAdmin SQL Dump
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
