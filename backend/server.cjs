@@ -15,12 +15,15 @@ const db = mysql.createConnection({
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  port: process.env.DB_PORT || 3306,
+ port: process.env.DB_PORT || 3306 // ต้องใส่
 });
 
 db.connect((err) => {
-  if (err) console.error("❌ MySQL connection error:", err);
-  else console.log("✅ Connected to MySQL!");
+  if (err) {
+    console.error("❌ MySQL connection error:", err);
+  } else {
+    console.log("✅ Connected to MySQL!");
+  }
 });
 
 // Serve frontend dist
