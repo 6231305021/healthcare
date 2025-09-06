@@ -289,7 +289,7 @@ export default {
       try {
         const token = localStorage.getItem('userToken');
         const headers = token ? { 'x-auth-token': token } : {};
-        const response = await axios.get(`https://healthcare-production-1567.up.railway.app/api/https://healthcare-production-1567.up.railway.app/auth/patients/${id}`, { headers });
+        const response = await axios.get(`/https://healthcare-production-1567.up.railway.app/auth/patients/${id}`, { headers });
         console.log('Patient data from API:', response.data);
         this.patientName = response.data.name || response.data.patient?.name || 'ไม่พบชื่อผู้ป่วย';
       } catch (error) {
@@ -305,7 +305,7 @@ export default {
       try {
         const token = localStorage.getItem('userToken');
         const headers = token ? { 'x-auth-token': token } : {};
-        const response = await axios.get(`https://healthcare-production-1567.up.railway.app/api/https://healthcare-production-1567.up.railway.app/auth/daily-tracking/patient/${id}`, { headers });
+        const response = await axios.get(`https://healthcare-production-1567.up.railway.app/auth/daily-tracking/patient/${id}`, { headers });
         this.dailyTrackingData = response.data.map(item => ({
           ...item,
           blood_pressure_systolic: item.blood_pressure_systolic + '/' + item.blood_pressure_diastolic,
@@ -345,7 +345,7 @@ export default {
       try {
         const token = localStorage.getItem('userToken');
         const headers = token ? { 'x-auth-token': token } : {};
-        const response = await axios.post('https://healthcare-production-1567.up.railway.app/api/https://healthcare-production-1567.up.railway.app/auth/daily-tracking', payload, { headers });
+        const response = await axios.post('api/https://healthcare-production-1567.up.railway.app/auth/daily-tracking', payload, { headers });
         console.log('บันทึกข้อมูลสำเร็จ', response.data);
         showSuccessAlert('บันทึกข้อมูลสำเร็จ');
         this.resetNewTrackingForm();

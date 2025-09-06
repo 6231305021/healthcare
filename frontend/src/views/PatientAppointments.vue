@@ -420,7 +420,7 @@ export default {
       try {
         const token = localStorage.getItem('userToken');
         const headers = token ? { 'x-auth-token': token } : {};
-        const response = await axios.get(`https://healthcare-production-1567.up.railway.app/api/https://healthcare-production-1567.up.railway.app/auth/${id}`, { headers });
+        const response = await axios.get(`https://healthcare-production-1567.up.railway.app/auth/${id}`, { headers });
         this.patientName = response.data.name || response.data.patient?.name || 'ไม่พบชื่อผู้ป่วย';
       } catch (error) {
         console.error('Failed to load patient name:', error.response?.data || error.message);
@@ -447,7 +447,7 @@ export default {
       try {
         const token = localStorage.getItem('userToken');
         const headers = token ? { 'x-auth-token': token } : {};
-        const response = await axios.get(`https://healthcare-production-1567.up.railway.app/api/https://healthcare-production-1567.up.railway.app/auth/appointments/patient/${id}`, { headers });
+        const response = await axios.get(`https://healthcare-production-1567.up.railway.app/auth/appointments/patient/${id}`, { headers });
         this.appointmentHistory = response.data;
         this.$nextTick(() => {
           this.updateChart();
@@ -516,7 +516,7 @@ export default {
       try {
         const token = localStorage.getItem('userToken');
         const headers = token ? { 'x-auth-token': token } : {};
-        const response = await axios.post('https://healthcare-production-1567.up.railway.app/api/https://healthcare-production-1567.up.railway.app/auth/appointments', payload, { headers });
+        const response = await axios.post('https://healthcare-production-1567.up.railway.app/auth/appointments', payload, { headers });
         console.log('Appointment added successfully:', response.data);
         await Swal.fire({
           title: 'บันทึกสำเร็จ',
@@ -573,7 +573,7 @@ export default {
         try {
           const token = localStorage.getItem('userToken');
           const headers = token ? { 'x-auth-token': token } : {};
-          await axios.delete(`https://healthcare-production-1567.up.railway.app/api/https://healthcare-production-1567.up.railway.app/auth/appointments/${id}`, { headers });
+          await axios.delete(`https://healthcare-production-1567.up.railway.app/auth/appointments/${id}`, { headers });
           await Swal.fire({
             title: 'ลบสำเร็จ',
             text: 'ลบการนัดหมายเรียบร้อยแล้ว',
@@ -852,7 +852,7 @@ export default {
         const token = localStorage.getItem('userToken');
         const headers = token ? { 'x-auth-token': token } : {};
         const payload = { ...this.editAppointment };
-        await axios.put(`https://healthcare-production-1567.up.railway.app/api/https://healthcare-production-1567.up.railway.app/auth/appointments/${payload.id}`, payload, { headers });
+        await axios.put(`https://healthcare-production-1567.up.railway.app/auth/appointments/${payload.id}`, payload, { headers });
         this.editDialog = false;
         await this.fetchAppointments(this.patientId);
         this.$nextTick(() => { this.updateChart(); });

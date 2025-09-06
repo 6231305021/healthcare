@@ -98,7 +98,7 @@
                     <v-icon color="error" size="20">mdi-delete</v-icon>
                   </v-btn>
                   <v-img
-                    :src="patient.image_path ? `https://healthcare-production-1567.up.railway.app/api/https://healthcare-production-1567.up.railway.app/auth/${patient.image_path}` : defaultImage"
+                    :src="patient.image_path ? `https://healthcare-production-1567.up.railway.app/auth/${patient.image_path}` : defaultImage"
                     class="patient-image"
                     :aspect-ratio="1"
                     cover
@@ -240,7 +240,7 @@ export default {
     },
     async fetchPatients() {
       try {
-        const response = await axios.get('https://healthcare-production-1567.up.railway.app/api/https://healthcare-production-1567.up.railway.app/auth/patients');
+        const response = await axios.get('https://healthcare-production-1567.up.railway.app/auth/patients');
         if (Array.isArray(response.data.patients)) {
           this.patients = response.data.patients;
         } else {
@@ -326,7 +326,7 @@ export default {
         try {
           const token = localStorage.getItem('userToken');
           const headers = token ? { 'x-auth-token': token } : {};
-          await axios.delete(`https://healthcare-production-1567.up.railway.app/api/https://healthcare-production-1567.up.railway.app/auth/patients/${id}`, { headers });
+          await axios.delete(`https://healthcare-production-1567.up.railway.app/auth/patients/${id}`, { headers });
           showSuccessAlert('ลบข้อมูลผู้ป่วยสำเร็จ');
           this.fetchPatients(); // Refresh the patient list
         } catch (error) {
