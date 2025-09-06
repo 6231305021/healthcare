@@ -9,7 +9,7 @@
     "build:linux": "cd ./frontend && npm install && npm run build && rm -rf ../backend/dist && cp -r dist ../backend/",
     "build:win": "cd .\\frontend && npm install && npm run build && if exist ..\\backend\\dist rmdir /s /q ..\\backend\\dist && xcopy /e /i /y dist ..\\backend\\dist && cd  .\\backend && npm install",
     "build:backend": "cd ./backend/ && npm install",
-    "build": "npm run build:linux && npm run build:backend",
+    "build": "concurrently \"npm run build:linux\" \"cd ./backend/ && npm install\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
