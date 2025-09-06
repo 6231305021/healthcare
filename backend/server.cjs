@@ -13,7 +13,8 @@ app.use(express.json());
 
 // -------------------- Routes (API) --------------------
 const authRoutes = require("./routes/auth");
-app.use("/api/auth", authRoutes);
+app.use("/auth", authRoutes);
+
 
 app.get("/api", (req, res) => {
   db.query("SELECT NOW() AS now", (err, results) => {
