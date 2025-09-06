@@ -6,8 +6,9 @@ const cors = require("cors");
 require("dotenv").config();
 
 const app = express();
-const authRoutes = require("./routes/auth");
-app.use("/api/auth", authRoutes);
+const authRoutes = require('./routes/auth');
+app.use('/api/auth', authRoutes);
+
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
@@ -30,10 +31,10 @@ db.connect((err) => {
 
 // Serve frontend dist
 const distPath = path.join(__dirname, "dist");
-app.use(express.static(distPath));
-app.get("/", (req, res) => {
-  res.sendFile(path.join(distPath, "index.html"));
-});
+app.use("/", express.static(distPath));
+// app.get("/", (req, res) => {
+//   res.sendFile(path.join(distPath, "index.html"));
+// });
 
 // Example API
 app.get("/api", (req, res) => {
