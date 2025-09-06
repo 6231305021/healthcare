@@ -42,14 +42,16 @@ db.connect((err) => {
 // -------------------- Serve Frontend --------------------
 const distPath = path.join(__dirname, "dist");
 
-// 1. เสิร์ฟไฟล์ static (.js, .css, .png, .ico ฯลฯ)
+// Debug log
+console.log("📂 Serving frontend from:", distPath);
+
+// 1. เสิร์ฟไฟล์ static (.js, .css, images, favicon)
 app.use(express.static(distPath));
 
 // 2. ถ้าไม่ใช่ไฟล์จริง → ส่ง index.html กลับ (Vue/React Router ใช้ทำงาน)
 app.get("*", (req, res) => {
   res.sendFile(path.join(distPath, "index.html"));
 });
-// -------------------------------------------------------
 
 // -------------------- Start Server --------------------
 const PORT = process.env.PORT || 8080;
