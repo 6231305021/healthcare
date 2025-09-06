@@ -6,9 +6,11 @@
   "scripts": {
     "dev": "nodemon ./backend/server.cjs",
     "start": "node ./backend/server.cjs",
-    "build:linux": "cd ./frontend && npm install && npm run build && rm -rf ../backend/dist && cp -r dist ../backend/ && cd ./backend && npm install",
+    "build:linux": "cd ./frontend && npm install && npm run build && rm -rf ../backend/dist && cp -r dist ../backend/",
     "build:win": "cd .\\frontend && npm install && npm run build && if exist ..\\backend\\dist rmdir /s /q ..\\backend\\dist && xcopy /e /i /y dist ..\\backend\\dist && cd  .\\backend && npm install",
     "build": "if exist /C/Windows (npm run build:win) else (npm run build:linux)",
+    "build:backend": "cd ./backend/ && npm install",
+    "build:new":  "npm run build:linux && npm run build:backend",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
