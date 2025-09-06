@@ -1,6 +1,6 @@
 // server.cjs
 const express = require("express");
-const mysql = require("mysql2");
+const mysql = require("mysql2/promise");
 const path = require("path");
 const cors = require("cors");
 require("dotenv").config();
@@ -11,20 +11,8 @@ const app = express();
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
-// -------------------- Routes (API) --------------------
-const authRoutes = require("./routes/auth");
-app.use("/auth", authRoutes);
-
-
-app.get("/api", (req, res) => {
-  db.query("SELECT NOW() AS now", (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json({ message: "🚀 Backend API connected!", time: results[0].now });
-  });
-});
-
 // -------------------- MySQL --------------------
-const db = mysql.createConnection({
+const db = mysql.createPool({
   host: process.env.DB_HOST || "mysql.railway.internal",
   user: process.env.DB_USER || "root",
   password: process.env.DB_PASSWORD || "iuGIxHXlzLxiJkgZzlwrtEdrvgXaXcuS",
@@ -32,24 +20,32 @@ const db = mysql.createConnection({
   port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 3306,
 });
 
-db.connect((err) => {
-  if (err) {
-    console.error("❌ MySQL connection error:", err);
-  } else {
-    console.log("✅ Connected to MySQL!");
+// Test connection
+db.getConnection()
+  .then(() => console.log("✅ Connected to MySQL!"))
+  .catch((err) => console.error("❌ MySQL connection error:", err));
+
+// -------------------- Routes (API) --------------------
+const authRoutes = require("./routes/auth")(db);
+app.use("/api/auth", authRoutes);
+
+// Example API
+app.get("/api", async (req, res) => {
+  try {
+    const [results] = await db.query("SELECT NOW() AS now");
+    res.json({ message: "🚀 Backend API connected!", time: results[0].now });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
 // -------------------- Serve Frontend --------------------
 const distPath = path.join(__dirname, "dist");
-
-// Debug log
 console.log("📂 Serving frontend from:", distPath);
 
-// 1. เสิร์ฟไฟล์ static (.js, .css, images, favicon)
 app.use(express.static(distPath));
 
-// 2. ถ้าไม่ใช่ไฟล์จริง → ส่ง index.html กลับ (Vue/React Router ใช้ทำงาน)
+// Catch-all (Vue Router)
 app.get("*", (req, res) => {
   res.sendFile(path.join(distPath, "index.html"));
 });
