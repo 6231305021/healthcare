@@ -176,7 +176,7 @@ export default {
       try {
         const token = localStorage.getItem('userToken');
         const headers = token ? { 'x-auth-token': token } : {};
-        const response = await axios.get(`http://localhost:3001/api/patients/${id}`, { headers });
+        const response = await axios.get(`https://healthcare-production-1567.up.railway.app/${id}`, { headers });
         this.patientName = response.data.name;
       } catch (error) {
         console.error('โหลดชื่อผู้ป่วยล้มเหลว:', error.response?.data || error.message);
@@ -191,7 +191,7 @@ export default {
       try {
         const token = localStorage.getItem('userToken');
         const headers = token ? { 'x-auth-token': token } : {};
-        const response = await axios.get(`http://localhost:3001/api/appointments/patient/${patientId}`, { headers });
+        const response = await axios.get(`https://healthcare-production-1567.up.railway.app/${patientId}`, { headers });
         this.allAppointments = response.data.filter(app => app.appointment_date);
         this.allAppointments.sort((a, b) => new Date(b.appointment_date) - new Date(a.appointment_date));
       } catch (error) {

@@ -247,7 +247,7 @@ export default {
 
     async fetchUsers() {
       try {
-        const res = await axios.get('http://localhost:3001/api/users');
+        const res = await axios.get('https://healthcare-production-1567.up.railway.app/api/users');
         this.users = res.data.users || [];
         this.mergeAllUsers();
         this.showAllUserLocations();
@@ -259,7 +259,7 @@ export default {
 
     async fetchPatients() {
       try {
-        const res = await axios.get('http://localhost:3001/api/patients');
+        const res = await axios.get('https://healthcare-production-1567.up.railway.app/api/patients');
         if (Array.isArray(res.data)) {
           this.patients = res.data;
         } else if (res.data.patients && Array.isArray(res.data.patients)) {
@@ -338,7 +338,7 @@ export default {
           if (user.isPatient && user.image_path) {
             // Create custom icon for patient with image
             icon = L.icon({
-              iconUrl: `http://localhost:3001/${user.image_path}`,
+              iconUrl: `https://healthcare-production-1567.up.railway.app/api/https://healthcare-production-1567.up.railway.app/auth/${user.image_path}`,
               iconSize: [50, 50],
               iconAnchor: [25, 25],
               popupAnchor: [0, -25],
@@ -362,7 +362,7 @@ export default {
             <div class="popup-content">
               <h3>${user.first_name} ${user.last_name}</h3>
               ${user.isPatient && user.image_path ? 
-                `<img src="http://localhost:3001/${user.image_path}" alt="รูปผู้ป่วย">` : ''}
+                `<img src="https://healthcare-production-1567.up.railway.app/api/https://healthcare-production-1567.up.railway.app/auth/${user.image_path}" alt="รูปผู้ป่วย">` : ''}
               <p><strong>ที่อยู่:</strong> ${user.address}</p>
               ${user.isPatient && user.community_health_worker ? 
                 `<p><strong>อสม.ที่รับผิดชอบ:</strong> ${user.community_health_worker}</p>` : ''}

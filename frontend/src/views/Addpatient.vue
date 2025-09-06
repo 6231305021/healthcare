@@ -503,7 +503,7 @@ export default {
           formData.append('patientImage', this.patientImage);
         }
 
-        const res = await axios.post('http://localhost:3001/api/patients', formData, {
+        const res = await axios.post('https://healthcare-production-1567.up.railway.app/', formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }

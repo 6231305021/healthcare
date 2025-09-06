@@ -305,7 +305,7 @@ export default {
 
     const fetchData = async () => {
       try {
-        const res = await axios.get(`http://localhost:3001/api/daily-tracking/${patientId.value}`);
+        const res = await axios.get(`https://healthcare-production-1567.up.railway.app/${patientId.value}`);
         allData.value = res.data.map(item => ({
           ...item,
           recorded_at: new Date(item.recorded_at),

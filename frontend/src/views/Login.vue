@@ -117,7 +117,7 @@ export default {
 
       this.loading = true;
       try {
-        const res = await axios.post('http://localhost:3001/api/auth/login', {
+        const res = await axios.post('https://healthcare-production-1567.up.railway.app/auth/login', {
           citizenId: this.citizenId,
           password: this.password,
         });

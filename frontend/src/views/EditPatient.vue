@@ -140,7 +140,7 @@
                   ></v-file-input>
                   <v-img
                     v-if="imagePreview || patient.image_path"
-                    :src="imagePreview || `http://localhost:3001/${patient.image_path}`"
+                    :src="imagePreview || `https://healthcare-production-1567.up.railway.app/${patient.image_path}`"
                     max-height="200"
                     contain
                     class="mt-2 rounded-lg"
@@ -358,7 +358,7 @@ export default {
         return;
       }
       try {
-        const res = await axios.get(`http://localhost:3001/api/patients/${patientId}`);
+        const res = await axios.get(`https://healthcare-production-1567.up.railway.app/${patientId}`);
         if (res.data.patient) {
           this.patient = res.data.patient;
           this.initMap(this.patient.latitude, this.patient.longitude);
@@ -477,7 +477,7 @@ export default {
           formData.append('patientImage', this.patientImage);
         }
 
-        const res = await axios.put(`http://localhost:3001/api/patients/${patientId}`, formData, {
+        const res = await axios.put(`https://healthcare-production-1567.up.railway.app/${patientId}`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }

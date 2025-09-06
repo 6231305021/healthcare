@@ -247,7 +247,7 @@ export default {
         return; 
       }
       try {
-        const res = await axios.get(`http://localhost:3001/api/users/${userId}`);
+        const res = await axios.get(`https://healthcare-production-1567.up.railway.app/api/https://healthcare-production-1567.up.railway.app/auth/api/users/${userId}`);
         if (res.data && res.data.user) {
           if (res.data.user.citizen_id) {
             res.data.user.citizen_id = String(res.data.user.citizen_id);
@@ -276,7 +276,7 @@ export default {
         showLoading('กำลังบันทึกข้อมูล...');
 
         try {
-          const res = await axios.put(`http://localhost:3001/api/users/${this.user.id}`, this.user);
+          const res = await axios.put(`https://healthcare-production-1567.up.railway.app/api/https://healthcare-production-1567.up.railway.app/auth/users/${this.user.id}`, this.user);
           if (res.data && res.data.success) {
             closeLoading();
             await showSuccessAlert('บันทึกข้อมูลส่วนตัวสำเร็จ!');
