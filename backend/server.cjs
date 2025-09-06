@@ -14,6 +14,12 @@ app.use(express.json());
 // -------------------- Routes (API) --------------------
 const authRoutes = require("./routes/auth");
 app.use("/auth", authRoutes);
+const geocodeRoutes = require('./routes/geocode');
+app.use('/auth', geocodeRoutes);
+const dailyTrackingRoutes = require('./routes/dailyTracking');
+app.use('/auth', dailyTrackingRoutes);
+const appointmentsRoutes = require('./routes/appointments');
+app.use('/auth', appointmentsRoutes);
 
 
 app.get("/api", (req, res) => {

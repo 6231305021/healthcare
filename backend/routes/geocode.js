@@ -1,8 +1,10 @@
+// routes/geocode.js
 const express = require('express');
 const axios = require('axios');
 
 const router = express.Router();
 
+// POST /auth/geocode
 router.post('/geocode', async (req, res) => {
   const { address } = req.body;
 
@@ -19,11 +21,11 @@ router.post('/geocode', async (req, res) => {
         limit: 1,
       },
       headers: {
-        'User-Agent': 'disaster-ai-app/1.0',
+        'User-Agent': 'disaster-ai-app/1.0', // ตั้งชื่อ user-agent ของแอปคุณ
       },
     });
 
-    if (response.data.length === 0) {
+    if (!response.data || response.data.length === 0) {
       return res.status(404).json({ message: 'ไม่พบพิกัดสำหรับที่อยู่นี้' });
     }
 
@@ -36,7 +38,7 @@ router.post('/geocode', async (req, res) => {
       raw: result,
     });
   } catch (err) {
-    console.error(err);
+    console.error('Error geocoding address:', err);
     res.status(500).json({ message: 'เกิดข้อผิดพลาดขณะแปลงพิกัด' });
   }
 });

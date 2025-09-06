@@ -1,13 +1,13 @@
+// routes/appointments.js
 const express = require('express');
 const router = express.Router();
-const db = require('../db'); 
+const db = require('../db'); // ใช้ db จาก server.cjs
 
-
-// GET all appointments for a specific patient
+// GET patient info by id
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const [rows] = await db.execute('SELECT id, name FROM patients WHERE id = ?', [id]);
+    const [rows] = await db.query('SELECT id, name FROM patients WHERE id = ?', [id]);
     if (rows.length === 0) {
       return res.status(404).json({ message: 'Patient not found' });
     }
@@ -18,10 +18,14 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// GET all appointments for a specific patient
 router.get('/patient/:patientId', async (req, res) => {
   const { patientId } = req.params;
   try {
-    const [rows] = await db.execute('SELECT * FROM appointments WHERE patient_id = ? ORDER BY appointment_date DESC, appointment_time DESC', [patientId]);
+    const [rows] = await db.query(
+      'SELECT * FROM appointments WHERE patient_id = ? ORDER BY appointment_date DESC, appointment_time DESC',
+      [patientId]
+    );
     res.json(rows);
   } catch (error) {
     console.error('Error fetching appointments:', error);
@@ -29,6 +33,7 @@ router.get('/patient/:patientId', async (req, res) => {
   }
 });
 
+// PUT update appointment
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
   const {
@@ -44,21 +49,22 @@ router.put('/:id', async (req, res) => {
     status
   } = req.body;
 
-  // Basic validation
   if (!hn_number || !rights || !appointment_date || !appointment_time || !status) {
     return res.status(400).json({ message: 'Missing required appointment fields.' });
   }
 
   try {
-    const [result] = await db.execute(
+    const [result] = await db.query(
       `UPDATE appointments SET
         hn_number = ?, rights = ?, appointment_date = ?, appointment_time = ?, reason = ?, appointed_by = ?, contact_location = ?, other_details = ?, diagnosis = ?, status = ?
-      WHERE id = ?`,
+       WHERE id = ?`,
       [hn_number, rights, appointment_date, appointment_time, reason, appointed_by, contact_location, other_details, diagnosis, status, id]
     );
+
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: 'Appointment not found' });
     }
+
     res.json({ message: 'Appointment updated successfully' });
   } catch (error) {
     console.error('Error updating appointment:', error);
@@ -66,8 +72,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// POST a new appointment
-// Endpoint: POST /api/appointments
+// POST new appointment
 router.post('/', async (req, res) => {
   const {
     patient_id,
@@ -83,14 +88,14 @@ router.post('/', async (req, res) => {
     status
   } = req.body;
 
-  // Basic validation (can be enhanced)
   if (!patient_id || !hn_number || !rights || !appointment_date || !appointment_time || !status) {
     return res.status(400).json({ message: 'Missing required appointment fields.' });
   }
 
   try {
-    const [result] = await db.execute(
-      `INSERT INTO appointments (patient_id, hn_number, rights, appointment_date, appointment_time, reason, appointed_by, contact_location, other_details, diagnosis, status)
+    const [result] = await db.query(
+      `INSERT INTO appointments
+       (patient_id, hn_number, rights, appointment_date, appointment_time, reason, appointed_by, contact_location, other_details, diagnosis, status)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [patient_id, hn_number, rights, appointment_date, appointment_time, reason, appointed_by, contact_location, other_details, diagnosis, status]
     );
@@ -101,10 +106,11 @@ router.post('/', async (req, res) => {
   }
 });
 
+// DELETE appointment
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const [result] = await db.execute('DELETE FROM appointments WHERE id = ?', [id]);
+    const [result] = await db.query('DELETE FROM appointments WHERE id = ?', [id]);
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: 'Appointment not found' });
     }
