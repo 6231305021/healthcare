@@ -7,14 +7,22 @@ require("dotenv").config();
 
 const app = express();
 
-// Routes (API)
-const authRoutes = require("./routes/auth");
-app.use("/api/auth", authRoutes);
-
+// -------------------- Middleware --------------------
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
-// MySQL connection
+// -------------------- Routes (API) --------------------
+const authRoutes = require("./routes/auth");
+app.use("/api/auth", authRoutes);
+
+app.get("/api", (req, res) => {
+  db.query("SELECT NOW() AS now", (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ message: "🚀 Backend API connected!", time: results[0].now });
+  });
+});
+
+// -------------------- MySQL --------------------
 const db = mysql.createConnection({
   host: process.env.DB_HOST || "mysql.railway.internal",
   user: process.env.DB_USER || "root",
@@ -34,24 +42,16 @@ db.connect((err) => {
 // -------------------- Serve Frontend --------------------
 const distPath = path.join(__dirname, "dist");
 
-// เสิร์ฟไฟล์ static (CSS, JS, images, favicon)
+// 1. เสิร์ฟไฟล์ static (.js, .css, .png, .ico ฯลฯ)
 app.use(express.static(distPath));
 
-// Catch-all -> ให้ Vue/React Router ทำงาน
+// 2. ถ้าไม่ใช่ไฟล์จริง → ส่ง index.html กลับ (Vue/React Router ใช้ทำงาน)
 app.get("*", (req, res) => {
   res.sendFile(path.join(distPath, "index.html"));
 });
-// --------------------------------------------------------
+// -------------------------------------------------------
 
-// Example API
-app.get("/api", (req, res) => {
-  db.query("SELECT NOW() AS now", (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json({ message: "🚀 Backend API connected!", time: results[0].now });
-  });
-});
-
-// Start server
+// -------------------- Start Server --------------------
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, "0.0.0.0", () =>
   console.log(`🚀 Server running on port ${PORT}`)
