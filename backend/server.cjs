@@ -11,24 +11,6 @@ const app = express();
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
-// -------------------- Routes (API) --------------------
-const authRoutes = require("./routes/auth");
-app.use("/auth", authRoutes);
-const geocodeRoutes = require('./routes/geocode');
-app.use('/auth', geocodeRoutes);
-const dailyTrackingRoutes = require('./routes/dailyTracking');
-app.use('/auth', dailyTrackingRoutes);
-const appointmentsRoutes = require('./routes/appointments');
-app.use('/auth', appointmentsRoutes);
-
-
-app.get("/api", (req, res) => {
-  db.query("SELECT NOW() AS now", (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json({ message: "🚀 Backend API connected!", time: results[0].now });
-  });
-});
-
 // -------------------- MySQL --------------------
 const db = mysql.createConnection({
   host: process.env.DB_HOST || "mysql.railway.internal",
@@ -46,16 +28,40 @@ db.connect((err) => {
   }
 });
 
+// -------------------- Routes (API) --------------------
+const authRoutes = require("./routes/auth");
+const geocodeRoutes = require('./routes/geocode');
+const dailyTrackingRoutes = require('./routes/dailyTracking');
+const appointmentsRoutes = require('./routes/appointments');
+const patientRoutes = require('./routes/patient');
+const userRoutes = require('./routes/user');
+
+// Root /auth for authentication
+app.use("/auth", authRoutes);
+
+// Other API routes under /auth with subpaths
+app.use("/auth/geocode", geocodeRoutes);
+app.use("/auth/dailyTracking", dailyTrackingRoutes);
+app.use("/auth/appointments", appointmentsRoutes);
+app.use("/auth/patients", patientRoutes);
+app.use("/auth/users", userRoutes);
+
+// -------------------- Test API --------------------
+app.get("/api", (req, res) => {
+  db.query("SELECT NOW() AS now", (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ message: "🚀 Backend API connected!", time: results[0].now });
+  });
+});
+
 // -------------------- Serve Frontend --------------------
 const distPath = path.join(__dirname, "dist");
-
-// Debug log
 console.log("📂 Serving frontend from:", distPath);
 
-// 1. เสิร์ฟไฟล์ static (.js, .css, images, favicon)
+// Serve static files
 app.use(express.static(distPath));
 
-// 2. ถ้าไม่ใช่ไฟล์จริง → ส่ง index.html กลับ (Vue/React Router ใช้ทำงาน)
+// Fallback for SPA (Vue/React Router)
 app.get("*", (req, res) => {
   res.sendFile(path.join(distPath, "index.html"));
 });
