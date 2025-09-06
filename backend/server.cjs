@@ -6,8 +6,10 @@ const cors = require("cors");
 require("dotenv").config();
 
 const app = express();
-const authRoutes = require('./routes/auth');
-app.use('/api/auth', authRoutes);
+
+// Routes (API)
+const authRoutes = require("./routes/auth");
+app.use("/api/auth", authRoutes);
 
 app.use(cors({ origin: "*" }));
 app.use(express.json());
@@ -29,12 +31,17 @@ db.connect((err) => {
   }
 });
 
-// Serve frontend dist
+// -------------------- Serve Frontend --------------------
 const distPath = path.join(__dirname, "dist");
-app.use("/", express.static(distPath));
-// app.get("/", (req, res) => {
-//   res.sendFile(path.join(distPath, "index.html"));
-// });
+
+// เสิร์ฟไฟล์ static (CSS, JS, images, favicon)
+app.use(express.static(distPath));
+
+// Catch-all -> ให้ Vue/React Router ทำงาน
+app.get("*", (req, res) => {
+  res.sendFile(path.join(distPath, "index.html"));
+});
+// --------------------------------------------------------
 
 // Example API
 app.get("/api", (req, res) => {
@@ -46,4 +53,6 @@ app.get("/api", (req, res) => {
 
 // Start server
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, "0.0.0.0", () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, "0.0.0.0", () =>
+  console.log(`🚀 Server running on port ${PORT}`)
+);
