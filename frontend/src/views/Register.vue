@@ -335,7 +335,7 @@ export default {
 
       this.loading = true;
       try {
-        const response = await axios.post('https://healthcare-production-1567.up.railway.app/api/https://healthcare-production-1567.up.railway.app/auth/register', {
+        const response = await axios.post('https://healthcare-production-1567.up.railway.app/api/auth/register', {
           citizenId: this.citizenId,
           firstName: this.firstName,
           lastName: this.lastName,

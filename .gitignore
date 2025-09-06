@@ -46,3 +46,4 @@ public/uploads/
 .next/
 .nuxt/
 .temp/ 
+/backend/dist/
