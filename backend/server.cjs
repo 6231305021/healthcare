@@ -13,22 +13,19 @@ app.use(express.json());
 
 // -------------------- MySQL --------------------
 const db = mysql.createConnection({
-  host: process.env.DB_HOST || "mysql.railway.internal",
-  user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "your_password_here",
-  database: process.env.DB_NAME || "railway",
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
   port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 3306,
 });
 
 db.connect((err) => {
-  if (err) {
-    console.error("❌ MySQL connection error:", err);
-  } else {
-    console.log("✅ Connected to MySQL!");
-  }
+  if (err) console.error("❌ MySQL connection error:", err);
+  else console.log("✅ Connected to MySQL!");
 });
 
-// -------------------- Routes (API) --------------------
+// -------------------- Routes --------------------
 const authRoutes = require("./routes/auth");
 const geocodeRoutes = require('./routes/geocode');
 const dailyTrackingRoutes = require('./routes/dailyTracking');
@@ -36,10 +33,7 @@ const appointmentsRoutes = require('./routes/appointments');
 const patientRoutes = require('./routes/patient');
 const userRoutes = require('./routes/user');
 
-// Auth
 app.use("/auth", authRoutes);
-
-// Other API routes
 app.use("/geocode", geocodeRoutes);
 app.use("/dailyTracking", dailyTrackingRoutes);
 app.use("/appointments", appointmentsRoutes);
@@ -55,9 +49,8 @@ app.get("/api", (req, res) => {
 });
 
 // -------------------- Serve Frontend --------------------
-const distPath = path.join(__dirname, "frontend", "dist"); // 👈 ถ้า frontend อยู่ในโฟลเดอร์ frontend
+const distPath = path.join(__dirname, "frontend", "dist"); // 👈 ปรับตามโฟลเดอร์จริง
 console.log("📂 Serving frontend from:", distPath);
-
 app.use(express.static(distPath));
 app.get("*", (req, res) => {
   res.sendFile(path.join(distPath, "index.html"));

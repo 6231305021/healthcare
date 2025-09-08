@@ -1,6 +1,5 @@
 <template>
-  <!-- template เดิมไม่ต้องแก้ -->
-  <!-- ... -->
+  <!-- template เดิมของคุณ ไม่ต้องแก้ -->
 </template>
 
 <script>
@@ -10,8 +9,8 @@ import 'leaflet/dist/leaflet.css';
 import axios from 'axios';
 import { showSuccessAlert, showErrorAlert, showWarningAlert } from '../utils/sweetAlert';
 
-// ✅ ใช้ API Patient URL จาก .env
-const API_PATIENT = import.meta.env.VITE_API_PATIENT || 'http://localhost:8080/patient';
+// ✅ ดึง Base URL จาก .env
+const API_PATIENT = import.meta.env.VITE_API_PATIENT || "http://localhost:8080/patient";
 
 export default {
   data() {
@@ -55,7 +54,7 @@ export default {
   },
   methods: {
     initMap() {
-      this.map = L.map('map').setView([13.736717, 100.523186], 6); // Default Bangkok
+      this.map = L.map('map').setView([13.736717, 100.523186], 6);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors',
       }).addTo(this.map);
@@ -86,12 +85,7 @@ export default {
       const query = `${this.subdistrict} ${this.district} ${this.province}`;
       try {
         const res = await axios.get(`https://nominatim.openstreetmap.org/search`, {
-          params: {
-            q: query,
-            format: 'json',
-            addressdetails: 1,
-            limit: 1,
-          },
+          params: { q: query, format: 'json', addressdetails: 1, limit: 1 },
         });
 
         if (res.data.length > 0) {
@@ -115,9 +109,7 @@ export default {
         return;
       }
       const reader = new FileReader();
-      reader.onload = e => {
-        this.imagePreview = e.target.result;
-      };
+      reader.onload = e => { this.imagePreview = e.target.result; };
       reader.readAsDataURL(file);
     },
 
@@ -144,12 +136,9 @@ export default {
         formData.append('address_detail', this.address_detail);
         formData.append('latitude', this.latitude);
         formData.append('longitude', this.longitude);
-        
-        if (this.patientImage) {
-          formData.append('patientImage', this.patientImage);
-        }
+        if (this.patientImage) formData.append('patientImage', this.patientImage);
 
-        // ✅ ใช้ Base URL จาก VITE_API_PATIENT
+        // ✅ ส่งข้อมูลผู้ป่วยผ่าน async function
         const res = await axios.post(API_PATIENT, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
@@ -174,21 +163,13 @@ export default {
         cancelButtonText: 'ยกเลิก',
         confirmButtonColor: '#3085d6',
         cancelButtonColor: '#d33',
-      }).then((result) => {
-        if (result.isConfirmed) {
-          this.$router.push('/')
-        }
-      })
+      }).then(result => {
+        if (result.isConfirmed) this.$router.push('/');
+      });
     },
-    goToUserPage() {
-      this.$router.push('/profile')
-    },
-    goToPatientInfo() {
-      this.$router.push('/patientinfo')
-    },
-    goToMap() {
-      this.$router.push('/map')
-    },
+    goToUserPage() { this.$router.push('/profile'); },
+    goToPatientInfo() { this.$router.push('/patientinfo'); },
+    goToMap() { this.$router.push('/map'); },
   },
 };
 </script>
