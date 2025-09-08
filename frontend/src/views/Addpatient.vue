@@ -1,5 +1,5 @@
 <template>
-  <!-- template เดิมของคุณ ไม่ต้องแก้ -->
+  <!-- template เดิมไม่ต้องแก้ -->
 </template>
 
 <script>
@@ -9,7 +9,7 @@ import 'leaflet/dist/leaflet.css';
 import axios from 'axios';
 import { showSuccessAlert, showErrorAlert, showWarningAlert } from '../utils/sweetAlert';
 
-// ✅ ดึง Base URL จาก .env
+// ดึง Base URL จาก .env
 const API_PATIENT = import.meta.env.VITE_API_PATIENT || "http://localhost:8080/patient";
 
 export default {
@@ -37,11 +37,7 @@ export default {
       genderOptions: ['ชาย', 'หญิง', 'อื่นๆ'],
       patientImage: null,
       imagePreview: null,
-      snackbar: {
-        show: false,
-        text: '',
-        color: '',
-      },
+      snackbar: { show: false, text: '', color: '' },
       rules: {
         required: v => !!v || 'กรุณากรอกข้อมูล',
         number: v => /^\d+$/.test(v) || 'กรุณากรอกตัวเลขเท่านั้น',
@@ -95,19 +91,14 @@ export default {
           this.latitude = parseFloat(lat).toFixed(6);
           this.longitude = parseFloat(lon).toFixed(6);
           showSuccessAlert(`พบพิกัดของ ${query}`);
-        } else {
-          showWarningAlert('ไม่พบพิกัดที่ระบุ');
-        }
+        } else showWarningAlert('ไม่พบพิกัดที่ระบุ');
       } catch (error) {
         showErrorAlert('เกิดข้อผิดพลาดในการค้นหาพิกัด');
       }
     },
 
     previewImage(file) {
-      if (!file) {
-        this.imagePreview = null;
-        return;
-      }
+      if (!file) { this.imagePreview = null; return; }
       const reader = new FileReader();
       reader.onload = e => { this.imagePreview = e.target.result; };
       reader.readAsDataURL(file);
@@ -138,7 +129,6 @@ export default {
         formData.append('longitude', this.longitude);
         if (this.patientImage) formData.append('patientImage', this.patientImage);
 
-        // ✅ ส่งข้อมูลผู้ป่วยผ่าน async function
         const res = await axios.post(API_PATIENT, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
@@ -153,7 +143,7 @@ export default {
       }
     },
 
-    goToHomePage() {
+    goToHomePage() { 
       Swal.fire({
         title: 'คุณแน่ใจหรือไม่?',
         text: 'คุณต้องการออกจากระบบใช่หรือไม่',
@@ -163,10 +153,9 @@ export default {
         cancelButtonText: 'ยกเลิก',
         confirmButtonColor: '#3085d6',
         cancelButtonColor: '#d33',
-      }).then(result => {
-        if (result.isConfirmed) this.$router.push('/');
-      });
+      }).then((result) => { if (result.isConfirmed) this.$router.push('/') });
     },
+
     goToUserPage() { this.$router.push('/profile'); },
     goToPatientInfo() { this.$router.push('/patientinfo'); },
     goToMap() { this.$router.push('/map'); },

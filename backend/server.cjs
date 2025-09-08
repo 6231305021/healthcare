@@ -1,4 +1,3 @@
-// server.cjs
 const express = require("express");
 const mysql = require("mysql2");
 const path = require("path");
@@ -33,7 +32,6 @@ const appointmentsRoutes = require('./routes/appointments');
 const patientRoutes = require('./routes/patient');
 const userRoutes = require('./routes/user');
 
-// API Routes
 app.use("/auth", authRoutes);
 app.use("/geocode", geocodeRoutes);
 app.use("/dailyTracking", dailyTrackingRoutes);
@@ -41,7 +39,7 @@ app.use("/appointments", appointmentsRoutes);
 app.use("/patient", patientRoutes);
 app.use("/user", userRoutes);
 
-// Test API
+// -------------------- Test API --------------------
 app.get("/api", (req, res) => {
   db.query("SELECT NOW() AS now", (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -50,14 +48,11 @@ app.get("/api", (req, res) => {
 });
 
 // -------------------- Serve Frontend --------------------
-// แก้ distPath ให้ตรงกับ backend root
-const distPath = path.join(__dirname, "dist"); // 👈 frontend/dist ย้ายมาที่ backend/dist
+const distPath = path.join(__dirname, "dist"); // ⚡ backend root/dist
 console.log("📂 Serving frontend from:", distPath);
 
-// Serve static files
 app.use(express.static(distPath));
 
-// SPA fallback (ต้องอยู่หลัง API routes)
 app.get("*", (req, res) => {
   res.sendFile(path.join(distPath, "index.html"));
 });
