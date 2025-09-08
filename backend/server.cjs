@@ -40,7 +40,7 @@ app.use("/appointments", appointmentsRoutes);
 app.use("/patient", patientRoutes);
 app.use("/user", userRoutes);
 
-// Test API
+// -------------------- Test API --------------------
 app.get("/api", (req, res) => {
   db.query("SELECT NOW() AS now", (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -49,8 +49,9 @@ app.get("/api", (req, res) => {
 });
 
 // -------------------- Serve Frontend --------------------
-const distPath = path.join(__dirname, "frontend", "dist"); // 👈 ปรับตามโฟลเดอร์จริง
+const distPath = path.join(__dirname, "frontend", "dist");
 console.log("📂 Serving frontend from:", distPath);
+
 app.use(express.static(distPath));
 app.get("*", (req, res) => {
   res.sendFile(path.join(distPath, "index.html"));
