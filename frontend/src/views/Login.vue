@@ -109,8 +109,7 @@ export default {
   },
   methods: {
     async login() {
-      const { valid } = await this.$refs.form.validate();
-      if (!valid) {
+      if (!this.$refs.form.validate()) {
         showErrorAlert('กรุณากรอกข้อมูลให้ถูกต้อง');
         return;
       }
@@ -122,17 +121,18 @@ export default {
           password: this.password,
         });
 
-        if (res.data && res.data.token) {
+        if (res.data?.token) {
           localStorage.setItem('token', res.data.token);
           console.log('JWT Token saved to localStorage.');
 
-          if (res.data.user && res.data.user.id && res.data.user.role) {
-            localStorage.setItem('userId', res.data.user.id);
-            localStorage.setItem('userRole', res.data.user.role); 
-            console.log('User ID saved to localStorage:', res.data.user.id);
-            console.log('User Role saved to localStorage:', res.data.user.role);
+          const user = res.data.user;
+          if (user?.id && user?.role) {
+            localStorage.setItem('userId', user.id);
+            localStorage.setItem('userRole', user.role); 
+            console.log('User ID saved:', user.id);
+            console.log('User Role saved:', user.role);
 
-            if (res.data.user.role === 'admin') {
+            if (user.role === 'admin') {
               await showSuccessAlert('เข้าสู่ระบบสำเร็จ (Admin)');
               this.$router.push('/adminmap'); 
             } else {
@@ -140,23 +140,18 @@ export default {
               this.$router.push('/map'); 
             }
           } else {
-            console.warn('Login successful but user ID or role not found in response from backend.');
+            console.warn('Login success but user info missing');
             showErrorAlert('เข้าสู่ระบบล้มเหลว: ไม่พบข้อมูลผู้ใช้');
           }
         } else {
-          showErrorAlert(res.data.message || 'เข้าสู่ระบบล้มเหลว: ไม่ได้รับ Token');
+          showErrorAlert(res.data?.message || 'เข้าสู่ระบบล้มเหลว: ไม่ได้รับ Token');
         }
       } catch (error) {
-        console.error('Login error:', error.response ? error.response.data : error.message);
+        console.error('Login error:', error.response?.data || error.message);
         showErrorAlert(error.response?.data?.message || 'เข้าสู่ระบบล้มเหลว: เลขบัตรประชาชนหรือรหัสผ่านไม่ถูกต้อง');
       } finally {
         this.loading = false;
       }
-    },
-    showSnackbar(text, color) {
-      this.snackbar.text = text;
-      this.snackbar.color = color;
-      this.snackbar.show = true;
     },
     showSnackbar(text, color) {
       this.snackbar.text = text;
@@ -170,20 +165,16 @@ export default {
 <style scoped>
 .background-image {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  height: 100%;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%; height: 100%;
   background-image: url('/backgroundvue.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   background-color: transparent;
   filter: blur(6px);
-  transform: scale(1.1); /* Prevent white edges during blur */
-  margin: -10px; /* Compensate for scale */
+  transform: scale(1.1);
+  margin: -10px;
 }
 
 .login-container {
@@ -199,164 +190,61 @@ export default {
 }
 
 @media (max-width: 1290px) {
-  .login-container {
-    padding-top: 2.5rem;
-  }
-  
-  .logo-top-text {
-    font-size: 2.5em !important;
-  }
-  
-  .login-card {
-    max-width: 400px;
-  }
+  .login-container { padding-top: 2.5rem; }
+  .logo-top-text { font-size: 2.5em !important; }
+  .login-card { max-width: 400px; }
 }
 
 @media (max-width: 600px) {
-  .login-container {
-    padding-top: 1rem;
-  }
-  
-  .logo-text-container {
-    margin-bottom: 20px;
-  }
-  
-  .login-card {
-    padding: 20px !important;
-  }
-  
-  .login-button {
-    height: 45px !important;
-    font-size: 1.1em;
-  }
+  .login-container { padding-top: 1rem; }
+  .logo-text-container { margin-bottom: 20px; }
+  .login-card { padding: 20px !important; }
+  .login-button { height: 45px !important; font-size: 1.1em; }
 }
 
 @media (max-width: 430px) {
-  .login-container {
-    padding-top: 1rem;
-  }
-  
-  .logo-text-container {
-    margin-bottom: 15px;
-  }
-  
-  .logo-top-text {
-    font-size: 1.8em !important;
-  }
-  
-  .login-card {
-    padding: 15px !important;
-    max-width: 100%;
-  }
-  
-  .login-button {
-    height: 40px !important;
-    font-size: 1em;
-  }
-  
-  .v-input--dense.custom-textfield .v-input__control {
-    height: 35px;
-  }
-  
-  .v-input--dense.custom-textfield .v-label {
-    font-size: 1em;
-  }
+  .login-container { padding-top: 1rem; }
+  .logo-text-container { margin-bottom: 15px; }
+  .logo-top-text { font-size: 1.8em !important; }
+  .login-card { padding: 15px !important; max-width: 100%; }
+  .login-button { height: 40px !important; font-size: 1em; }
+  .v-input--dense.custom-textfield .v-input__control { height: 35px; }
+  .v-input--dense.custom-textfield .v-label { font-size: 1em; }
 }
 
-.v-application {
-  background-color: transparent !important;
-  overflow-x: hidden;
-  width: 100%;
-}
+.v-application { background-color: transparent !important; overflow-x: hidden; width: 100%; }
+.v-container { background-color: transparent !important; }
 
-.v-container {
-  background-color: transparent !important;
-}
-
-.logo-text-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 40px;
-}
-
+.logo-text-container { display: flex; flex-direction: column; align-items: center; margin-bottom: 40px; }
 .logo-top-text {
-  font-size: 3em;
-  font-weight: bold;
-  color: #3B5F6D;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  white-space: nowrap;
+  font-size: 3em; font-weight: bold; color: #3B5F6D;
+  line-height: 1; display: flex; align-items: center; justify-content: center;
+  gap: 8px; white-space: nowrap;
 }
+.logo-text { white-space: nowrap; }
 
-.logo-text {
-  white-space: nowrap;
-}
-
-.login-form-col {
-  padding: 0 16px;
-}
-
+.login-form-col { padding: 0 16px; }
 .login-card {
-  background-color: #F8F8F4;
-  border-radius: 20px;
-  border: 3px solid #8EC3B0;
-  padding: 30px !important;
-  width: 100%;
-  max-width: 400px;
-  margin: 0 auto;
+  background-color: #F8F8F4; border-radius: 20px; border: 3px solid #8EC3B0;
+  padding: 30px !important; width: 100%; max-width: 400px; margin: 0 auto;
 }
 
-.v-input--dense.custom-textfield .v-input__control {
-  border-bottom: 2px solid #000;
-  height: 40px;
-}
-
-.v-input--dense.custom-textfield .v-input__slot {
-  min-height: auto !important;
-}
-
-.v-input--dense.custom-textfield .v-label {
-  color: #000;
-  font-size: 1.1em;
-  top: -5px;
-  left: 0;
-}
-
-.v-input--dense.custom-textfield .v-input__prepend-inner {
-  margin-right: 10px;
-}
-
-.v-input--dense.custom-textfield .v-input__append-inner {
-  margin-left: 10px;
-}
-
-.v-input--dense.custom-textfield fieldset {
-  border: none;
-}
+.v-input--dense.custom-textfield .v-input__control { border-bottom: 2px solid #000; height: 40px; }
+.v-input--dense.custom-textfield .v-input__slot { min-height: auto !important; }
+.v-input--dense.custom-textfield .v-label { color: #000; font-size: 1.1em; top: -5px; left: 0; }
+.v-input--dense.custom-textfield .v-input__prepend-inner { margin-right: 10px; }
+.v-input--dense.custom-textfield .v-input__append-inner { margin-left: 10px; }
+.v-input--dense.custom-textfield fieldset { border: none; }
 
 .login-button {
-  background-color: #92D7D0 !important;
-  color: white !important;
-  border-radius: 10px;
-  height: 50px !important;
-  font-size: 1.2em;
-  font-weight: bold;
+  background-color: #92D7D0 !important; color: white !important;
+  border-radius: 10px; height: 50px !important; font-size: 1.2em; font-weight: bold;
 }
 
 .create-account-button {
-  color: rgb(0, 0, 0) !important;
-  text-decoration: underline;
-  font-size: 1.1em;
-  text-transform: none !important;
-  padding: 0;
-  min-width: unset;
+  color: rgb(0, 0, 0) !important; text-decoration: underline;
+  font-size: 1.1em; text-transform: none !important; padding: 0; min-width: unset;
 }
 
-.v-card__text {
-  padding: 0 !important;
-}
+.v-card__text { padding: 0 !important; }
 </style>

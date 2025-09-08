@@ -3,7 +3,7 @@
   <v-container class="fill-height py-2" fluid>
     <v-row align="center" justify="center">
       <v-col cols="12" md="10" lg="8">
-        <v-card elevation="12" class="pa-3 rounded-xl" style="background: linear-gradient(to bottom right, #ffffff, #f8f9fa);">
+        <v-card elevation="12" class="pa-3 rounded-xl hover-effect" style="background: linear-gradient(to bottom right, #ffffff, #f8f9fa);">
           <v-card-title class="text-h5 font-weight-bold mb-4 text-center" style="color: #2c3e50;">
             <v-icon left color="#3498db" size="24">mdi-account-edit</v-icon>
             แก้ไขข้อมูลผู้ป่วย
@@ -11,7 +11,7 @@
 
           <v-form ref="form" v-model="valid" lazy-validation>
             <!-- ข้อมูลส่วนตัว -->
-            <v-card flat class="pa-3 mb-4 rounded-lg" style="background: linear-gradient(to right, #ffffff, #f0f7ff); border: 1px solid #e3f2fd;">
+            <v-card flat class="pa-3 mb-4 rounded-lg hover-effect" style="background: linear-gradient(to right, #ffffff, #f0f7ff); border: 1px solid #e3f2fd;">
               <v-subheader class="font-weight-bold" style="color: #2980b9;">
                 <v-icon left color="#3498db">mdi-account</v-icon>
                 ข้อมูลส่วนตัว
@@ -87,7 +87,7 @@
             </v-card>
 
             <!-- ข้อมูลการดูแล -->
-            <v-card flat class="pa-3 mb-4 rounded-lg" style="background: linear-gradient(to right, #ffffff, #f0fff4); border: 1px solid #e8f5e9;">
+            <v-card flat class="pa-3 mb-4 rounded-lg hover-effect" style="background: linear-gradient(to right, #ffffff, #f0fff4); border: 1px solid #e8f5e9;">
               <v-subheader class="font-weight-bold" style="color: #27ae60;">
                 <v-icon left color="#2ecc71">mdi-medical-bag</v-icon>
                 ข้อมูลการดูแล
@@ -119,7 +119,7 @@
             </v-card>
 
             <!-- รูปภาพผู้ป่วย -->
-            <v-card flat class="pa-3 mb-4 rounded-lg" style="background: linear-gradient(to right, #ffffff, #fff8e1); border: 1px solid #fff3e0;">
+            <v-card flat class="pa-3 mb-4 rounded-lg hover-effect" style="background: linear-gradient(to right, #ffffff, #fff8e1); border: 1px solid #fff3e0;">
               <v-subheader class="font-weight-bold" style="color: #f39c12;">
                 <v-icon left color="#f1c40f">mdi-camera</v-icon>
                 รูปภาพผู้ป่วย
@@ -139,16 +139,7 @@
                     class="custom-field"
                   ></v-file-input>
                   <v-img
-                    v-if="imagePreview || patient.image_path"
-                    :src="imagePreview || `hhttps://healthcare-production-1567.up.railway.app/auth/${patient.image_path}`"
-                    max-height="200"
-                    contain
-                    class="mt-2 rounded-lg"
-                    style="border: 2px solid #f1c40f;"
-                  ></v-img>
-                  <v-img
-                    v-else
-                    :src="defaultImage"
+                    :src="patientImageUrl"
                     max-height="200"
                     contain
                     class="mt-2 rounded-lg"
@@ -159,7 +150,7 @@
             </v-card>
 
             <!-- ที่อยู่และพิกัด -->
-            <v-card flat class="pa-3 mb-4 rounded-lg" style="background: linear-gradient(to right, #ffffff, #f3e5f5); border: 1px solid #f3e5f5;">
+            <v-card flat class="pa-3 mb-4 rounded-lg hover-effect" style="background: linear-gradient(to right, #ffffff, #f3e5f5); border: 1px solid #f3e5f5;">
               <v-subheader class="font-weight-bold" style="color: #8e44ad;">
                 <v-icon left color="#9b59b6">mdi-map-marker</v-icon>
                 ที่อยู่และพิกัด
@@ -256,7 +247,7 @@
             </v-card>
 
             <!-- ปุ่มดำเนินการ -->
-            <v-card flat class="pa-3 rounded-lg" style="background: linear-gradient(to right, #ffffff, #e8eaf6); border: 1px solid #e8eaf6;">
+            <v-card flat class="pa-3 rounded-lg hover-effect" style="background: linear-gradient(to right, #ffffff, #e8eaf6); border: 1px solid #e8eaf6;">
               <v-row>
                 <v-col cols="12" md="6">
                   <v-btn 
@@ -347,6 +338,13 @@ export default {
       },
     };
   },
+  computed: {
+    patientImageUrl() {
+      if (this.imagePreview) return this.imagePreview;
+      if (this.patient.image_path) return `https://healthcare-production-1567.up.railway.app/auth/${this.patient.image_path}`;
+      return this.defaultImage;
+    }
+  },
   mounted() {
     this.fetchPatient();
   },
@@ -374,6 +372,9 @@ export default {
     },
 
     initMap(lat = 13.736717, lng = 100.523186) {
+      lat = lat || 13.736717;
+      lng = lng || 100.523186;
+
       if (this.map) {
         this.map.remove();
       }
@@ -407,7 +408,10 @@ export default {
         showWarningAlert('กรุณากรอกจังหวัดหรืออำเภอเพื่อค้นหา');
         return;
       }
-      const query = `${this.patient.subdistrict} ${this.patient.district} ${this.patient.province}`;
+      const query = [this.patient.subdistrict, this.patient.district, this.patient.province]
+        .filter(Boolean)
+        .join(' ');
+
       try {
         const res = await axios.get(`https://nominatim.openstreetmap.org/search`, {
           params: {
@@ -456,9 +460,7 @@ export default {
         'คุณต้องการบันทึกการแก้ไขข้อมูลผู้ป่วยใช่หรือไม่?'
       );
 
-      if (!result.isConfirmed) {
-        return;
-      }
+      if (!result.isConfirmed) return;
 
       this.loading = true;
       showLoading('กำลังบันทึกข้อมูล...');
@@ -467,9 +469,9 @@ export default {
         const patientId = this.$route.params.id;
         const formData = new FormData();
         
-        Object.keys(this.patient).forEach(key => {
-          if (key !== 'image_path') {
-            formData.append(key, this.patient[key]);
+        Object.entries(this.patient).forEach(([key, value]) => {
+          if (key !== 'image_path' && value !== null && value !== undefined) {
+            formData.append(key, value);
           }
         });
 
@@ -478,9 +480,7 @@ export default {
         }
 
         const res = await axios.put(`https://healthcare-production-1567.up.railway.app/auth/${patientId}`, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
+          headers: { 'Content-Type': 'multipart/form-data' }
         });
 
         if (res.data.message) {
@@ -509,12 +509,12 @@ export default {
   transform: translateY(-2px);
 }
 
-.v-card {
+.v-card.hover-effect {
   transition: all 0.3s ease;
 }
 
-.v-card:hover {
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+.v-card.hover-effect:hover {
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
 }
 
 #map {

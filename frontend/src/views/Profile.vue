@@ -1,25 +1,31 @@
 <template>
   <v-app>
+    <!-- Background Image -->
     <div class="background-image"></div>
+
+    <!-- Profile Container -->
     <v-container class="profile-container" fluid>
       <v-row justify="center">
         <v-col cols="12" md="8" lg="6">
-          <v-card elevation="12" class="pa-3 rounded-xl" style="background: linear-gradient(to bottom right, #ffffff, #f8f9fa);">
+          <v-card elevation="12" class="pa-3 rounded-xl profile-card">
+            <!-- Card Header -->
             <v-card-title class="text-h5 font-weight-bold mb-4 text-center" style="color: #2c3e50;">
               <v-icon left color="#3498db" size="24">mdi-account-circle</v-icon>
               ข้อมูลส่วนตัวผู้ใช้งาน
               <v-spacer></v-spacer>
-              <v-btn color="#3498db" outlined @click="goBackToMap">
+              <v-btn color="#3498db" outlined @click="goBackToMap" class="hover-btn">
                 <v-icon left>mdi-arrow-left</v-icon>
                 กลับ
               </v-btn>
             </v-card-title>
 
+            <!-- Form -->
             <v-card-text>
               <v-form ref="profileForm" v-model="formValid">
-                <!-- ข้อมูลส่วนตัว -->
-                <v-card flat class="pa-3 mb-4 rounded-lg" style="background: linear-gradient(to right, #ffffff, #f0f7ff); border: 1px solid #e3f2fd;">
-                  <v-subheader class="font-weight-bold" style="color: #2980b9;">
+                
+                <!-- Personal Info -->
+                <v-card flat class="section-card mb-4">
+                  <v-subheader class="section-title">
                     <v-icon left color="#3498db">mdi-account</v-icon>
                     ข้อมูลส่วนตัว
                   </v-subheader>
@@ -64,9 +70,9 @@
                   </v-row>
                 </v-card>
 
-                <!-- ข้อมูลการติดต่อ -->
-                <v-card flat class="pa-3 mb-4 rounded-lg" style="background: linear-gradient(to right, #ffffff, #f0fff4); border: 1px solid #e8f5e9;">
-                  <v-subheader class="font-weight-bold" style="color: #27ae60;">
+                <!-- Contact Info -->
+                <v-card flat class="section-card mb-4 contact-card">
+                  <v-subheader class="section-title contact-title">
                     <v-icon left color="#2ecc71">mdi-phone</v-icon>
                     ข้อมูลการติดต่อ
                   </v-subheader>
@@ -98,9 +104,9 @@
                   </v-row>
                 </v-card>
 
-                <!-- ที่อยู่และพิกัด -->
-                <v-card flat class="pa-3 mb-4 rounded-lg" style="background: linear-gradient(to right, #ffffff, #f3e5f5); border: 1px solid #f3e5f5;">
-                  <v-subheader class="font-weight-bold" style="color: #8e44ad;">
+                <!-- Address & Coordinates -->
+                <v-card flat class="section-card mb-4 address-card">
+                  <v-subheader class="section-title address-title">
                     <v-icon left color="#9b59b6">mdi-map-marker</v-icon>
                     ที่อยู่และพิกัด
                   </v-subheader>
@@ -146,8 +152,8 @@
                   </v-row>
                 </v-card>
 
-                <!-- ปุ่มดำเนินการ -->
-                <v-card flat class="pa-3 rounded-lg" style="background: linear-gradient(to right, #ffffff, #e8eaf6); border: 1px solid #e8eaf6;">
+                <!-- Save Button -->
+                <v-card flat class="section-card mb-0">
                   <v-row dense>
                     <v-col cols="12">
                       <v-btn 
@@ -156,7 +162,7 @@
                         @click="saveProfile" 
                         :loading="saving"
                         elevation="2"
-                        class="white--text"
+                        class="white--text hover-btn"
                       >
                         <v-icon left>mdi-content-save</v-icon>
                         บันทึกข้อมูล
@@ -164,6 +170,7 @@
                     </v-col>
                   </v-row>
                 </v-card>
+
               </v-form>
             </v-card-text>
           </v-card>
@@ -171,6 +178,7 @@
       </v-row>
     </v-container>
 
+    <!-- Snackbar -->
     <v-snackbar
       v-model="snackbar.show"
       :color="snackbar.color"
@@ -213,108 +221,67 @@ export default {
           const pattern = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
           return pattern.test(value) || 'รูปแบบอีเมลไม่ถูกต้อง';
         },
-        phoneNumber: value => {
-          const pattern = /^\d{10}$/; // Simple 10-digit phone number check
-          return pattern.test(value) || 'กรุณากรอกเบอร์โทรศัพท์ 10 หลัก';
-        }
+        phoneNumber: value => /^\d{10}$/.test(value) || 'กรุณากรอกเบอร์โทรศัพท์ 10 หลัก'
       },
       snackbar: {
         show: false,
         text: '',
         color: ''
-      },
-      defaultImage: 'https://cdn-icons-png.flaticon.com/512/4320/4320337.png'
+      }
     };
   },
   mounted() {
     const loggedInUserId = localStorage.getItem('userId'); 
-    
-    if (loggedInUserId) {
-      this.fetchUserProfile(loggedInUserId);
-    } else {
+    if (loggedInUserId) this.fetchUserProfile(loggedInUserId);
+    else {
       showWarningAlert('กรุณาเข้าสู่ระบบเพื่อดูข้อมูลส่วนตัว');
       this.$router.push('/login'); 
     }
   },
   methods: {
-    goBackToMap() {
-      this.$router.push('/map');
-    },
+    goBackToMap() { this.$router.push('/map'); },
     async fetchUserProfile(userId) {
-      if (!userId) { 
-        console.error('User ID is missing for fetching profile.');
-        showErrorAlert('ไม่สามารถดึงข้อมูลโปรไฟล์ได้: ไม่พบ User ID');
-        return; 
-      }
+      if (!userId) return showErrorAlert('ไม่สามารถดึงข้อมูลโปรไฟล์ได้: ไม่พบ User ID');
       try {
         const res = await axios.get(`https://healthcare-production-1567.up.railway.app/auth/users/${userId}`);
-        if (res.data && res.data.user) {
-          if (res.data.user.citizen_id) {
-            res.data.user.citizen_id = String(res.data.user.citizen_id);
-          }
-          this.user = { ...res.data.user };
-        } else {
-          showWarningAlert('ไม่พบข้อมูลผู้ใช้งาน');
-        }
-      } catch (error) {
-        console.error('Error fetching user profile:', error);
-        showErrorAlert('เกิดข้อผิดพลาดในการโหลดข้อมูล');
-      }
+        if (res.data?.user) this.user = { ...res.data.user, citizen_id: String(res.data.user.citizen_id) };
+        else showWarningAlert('ไม่พบข้อมูลผู้ใช้งาน');
+      } catch (error) { console.error(error); showErrorAlert('เกิดข้อผิดพลาดในการโหลดข้อมูล'); }
     },
     async saveProfile() {
-      if (this.$refs.profileForm.validate()) {
-        const result = await showConfirmDialog(
-          'ยืนยันการแก้ไขข้อมูล',
-          'คุณต้องการบันทึกการแก้ไขข้อมูลส่วนตัวใช่หรือไม่?'
-        );
+      if (!this.$refs.profileForm.validate()) return showWarningAlert('กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง');
 
-        if (!result.isConfirmed) {
-          return;
-        }
+      const result = await showConfirmDialog('ยืนยันการแก้ไขข้อมูล','คุณต้องการบันทึกการแก้ไขข้อมูลส่วนตัวใช่หรือไม่?');
+      if (!result.isConfirmed) return;
 
-        this.saving = true;
-        showLoading('กำลังบันทึกข้อมูล...');
-
-        try {
-          const res = await axios.put(`https://healthcare-production-1567.up.railway.app/auth/users/${this.user.id}`, this.user);
-          if (res.data && res.data.success) {
-            closeLoading();
-            await showSuccessAlert('บันทึกข้อมูลส่วนตัวสำเร็จ!');
-          } else {
-            closeLoading();
-            showErrorAlert('ไม่สามารถบันทึกข้อมูลได้');
-          }
-        } catch (error) {
-          closeLoading();
-          console.error('Error saving profile:', error);
-          const errorMessage = error.response?.data?.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล';
-          showErrorAlert(errorMessage);
-        } finally {
-          this.saving = false;
-        }
-      } else {
-        showWarningAlert('กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง');
-      }
+      this.saving = true; showLoading('กำลังบันทึกข้อมูล...');
+      try {
+        const res = await axios.put(`https://healthcare-production-1567.up.railway.app/auth/users/${this.user.id}`, this.user);
+        if (res.data?.success) await showSuccessAlert('บันทึกข้อมูลส่วนตัวสำเร็จ!');
+        else showErrorAlert('ไม่สามารถบันทึกข้อมูลได้');
+      } catch (error) {
+        console.error(error);
+        const msg = error.response?.data?.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล';
+        showErrorAlert(msg);
+      } finally { this.saving = false; closeLoading(); }
     }
   }
 };
 </script>
 
 <style scoped>
-/* สไตล์ยังคงเหมือนเดิม */
 .background-image {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-image: url('/backgroundvue.png'); /* Ensure this path is correct */
+  background-image: url('/backgroundvue.png');
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
-  background-attachment: fixed;
-  background-color: transparent;
   filter: blur(6px);
+  z-index: -1;
 }
 
 .profile-container {
@@ -322,36 +289,45 @@ export default {
   z-index: 1;
   padding: 24px;
   min-height: 100vh;
-  display: flex; /* Use flexbox for centering */
-  align-items: center; /* Center vertically */
+  display: flex;
+  align-items: center;
 }
 
 .profile-card {
   background: rgba(255, 255, 255, 0.95) !important;
   border-radius: 16px !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
-  width: 100%; /* Ensure card takes full column width */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
 }
 
-/* Customizing Vuetify text fields for consistent look */
-:deep(.v-input--outlined fieldset) {
-  border-color: #92D7D0 !important; /* Light teal border */
+.section-card {
+  background: linear-gradient(to right, #ffffff, #f0f7ff);
+  border: 1px solid #e3f2fd;
+  border-radius: 12px;
+  transition: 0.3s;
 }
+.section-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
 
-:deep(.v-input--is-focused.v-input--outlined fieldset) {
-  border-color: #3B5F6D !important; /* Darker teal on focus */
-  border-width: 2px !important;
-}
+.contact-card { background: linear-gradient(to right, #ffffff, #f0fff4); border: 1px solid #e8f5e9; }
+.address-card { background: linear-gradient(to right, #ffffff, #f3e5f5); border: 1px solid #f3e5f5; }
 
-:deep(.v-label) {
-  color: #3B5F6D !important; /* Label color */
-}
+.section-title { font-weight: bold; color: #3498db; margin-bottom: 12px; }
+.contact-title { color: #27ae60; }
+.address-title { color: #8e44ad; }
 
-:deep(.v-input__icon--prepend-inner .v-icon) {
-  color: #92D7D0 !important; /* Icon color */
-}
+.hover-btn { transition: 0.3s; }
+.hover-btn:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
 
-:deep(.v-text-field.v-input--is-disabled .v-input__control) {
-  opacity: 0.7; /* Make disabled fields slightly faded */
+.custom-field { margin-bottom: 12px; }
+
+/* Vuetify field overrides */
+:deep(.v-input--outlined fieldset) { border-color: #92D7D0 !important; }
+:deep(.v-input--is-focused.v-input--outlined fieldset) { border-color: #3B5F6D !important; border-width: 2px !important; }
+:deep(.v-label) { color: #3B5F6D !important; }
+:deep(.v-input__icon--prepend-inner .v-icon) { color: #92D7D0 !important; }
+:deep(.v-text-field.v-input--is-disabled .v-input__control) { opacity: 0.7; }
+
+@media (max-width: 960px) {
+  .v-card-title { font-size: 1.1rem; }
+  .hover-btn { font-size: 0.9rem; padding: 4px 12px; }
 }
 </style>

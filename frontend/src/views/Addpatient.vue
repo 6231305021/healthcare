@@ -409,7 +409,7 @@ export default {
   },
   methods: {
     initMap() {
-      this.map = L.map('map').setView([13.736717, 100.523186], 6); // Default to Bangkok or central Thailand
+      this.map = L.map('map').setView([13.736717, 100.523186], 6); // Default Bangkok
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors',
       }).addTo(this.map);
@@ -450,7 +450,7 @@ export default {
 
         if (res.data.length > 0) {
           const { lat, lon } = res.data[0];
-          this.map.setView([lat, lon], 14); // ซูมเข้าไปมากขึ้น
+          this.map.setView([lat, lon], 14);
           this.marker.setLatLng([lat, lon]);
           this.latitude = parseFloat(lat).toFixed(6);
           this.longitude = parseFloat(lon).toFixed(6);
@@ -531,7 +531,6 @@ export default {
         cancelButtonColor: '#d33',
       }).then((result) => {
         if (result.isConfirmed) {
-          // ทำการ logout หรือเปลี่ยนหน้า
           this.$router.push('/')
         }
       })
@@ -575,44 +574,17 @@ export default {
   .v-toolbar__title {
     font-size: 1.1rem;
   }
-  
-  .v-btn {
-    padding: 0 8px;
-  }
-  
-  .v-btn .v-icon {
-    margin-right: 4px;
-  }
-  
-  .v-card {
-    padding: 16px;
-  }
+  .v-btn { padding: 0 8px; }
+  .v-btn .v-icon { margin-right: 4px; }
+  .v-card { padding: 16px; }
 }
 
 @media (max-width: 600px) {
-  .v-toolbar__title {
-    font-size: 1rem;
-  }
-  
-  .v-card {
-    padding: 12px;
-  }
-  
-  .v-card-title {
-    font-size: 1.1rem;
-  }
-  
-  .v-card-text {
-    font-size: 0.9rem;
-  }
-  
-  .v-text-field {
-    margin-bottom: 8px;
-  }
-  
-  .v-btn {
-    padding: 0 4px;
-    font-size: 0.8rem;
-  }
+  .v-toolbar__title { font-size: 1rem; }
+  .v-card { padding: 12px; }
+  .v-card-title { font-size: 1.1rem; }
+  .v-card-text { font-size: 0.9rem; }
+  .v-text-field { margin-bottom: 8px; }
+  .v-btn { padding: 0 4px; font-size: 0.8rem; }
 }
 </style>

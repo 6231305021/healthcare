@@ -10,7 +10,7 @@
 
           <v-form ref="form" v-model="valid" lazy-validation>
             <v-row dense>
-              <!-- ส่วนข้อมูลส่วนตัว -->
+              <!-- Personal Info -->
               <v-col cols="12" md="6">
                 <v-card flat class="mb-3 pa-2 rounded-lg section-card">
                   <div class="text-subtitle-2 font-weight-bold mb-2 primary--text">
@@ -66,9 +66,9 @@
                 </v-card>
               </v-col>
 
-              <!-- ส่วนข้อมูลการเข้าสู่ระบบ -->
+              <!-- Login Info -->
               <v-col cols="12" md="6">
-                <v-card flat class="mb-3 pa-2 rounded-lg section-card">
+                <v-card flat class="mb-3 pa-2 rounded-lg section-card login-card">
                   <div class="text-subtitle-2 font-weight-bold mb-2 primary--text">
                     <v-icon left small>mdi-lock</v-icon>
                     ข้อมูลการเข้าสู่ระบบ
@@ -128,8 +128,8 @@
               </v-col>
             </v-row>
 
-            <!-- ส่วนข้อมูลที่อยู่ -->
-            <v-card flat class="mb-3 pa-2 rounded-lg section-card">
+            <!-- Address & Map -->
+            <v-card flat class="mb-3 pa-2 rounded-lg section-card map-card">
               <div class="text-subtitle-2 font-weight-bold mb-2 primary--text">
                 <v-icon left small>mdi-map-marker</v-icon>
                 ข้อมูลที่อยู่
@@ -145,7 +145,7 @@
                       outlined
                       x-small
                       elevation="2"
-                      class="ml-auto"
+                      class="ml-auto hover-btn"
                     >
                       <v-icon left x-small>mdi-crosshairs-gps</v-icon>
                       ตำแหน่งปัจจุบัน
@@ -180,6 +180,7 @@
               </v-row>
             </v-card>
 
+            <!-- Register Button -->
             <v-btn
               block
               color="primary"
@@ -193,7 +194,7 @@
               สมัครสมาชิก
             </v-btn>
 
-            <v-btn text block color="grey" @click="$router.push('/')" class="back-btn">
+            <v-btn text block color="grey" @click="$router.push('/')" class="back-btn hover-btn">
               <v-icon left small>mdi-arrow-left</v-icon>
               กลับไปหน้าเข้าสู่ระบบ
             </v-btn>
@@ -202,6 +203,7 @@
       </v-col>
     </v-row>
 
+    <!-- Snackbar -->
     <v-snackbar
       v-model="snackbar.show"
       :color="snackbar.color"
@@ -210,11 +212,7 @@
     >
       {{ snackbar.text }}
       <template v-slot:action="{ attrs }">
-        <v-btn
-          text
-          v-bind="attrs"
-          @click="snackbar.show = false"
-        >
+        <v-btn text v-bind="attrs" @click="snackbar.show = false">
           ปิด
         </v-btn>
       </template>
@@ -247,11 +245,7 @@ export default {
       loading: false,
       map: null,
       marker: null,
-      snackbar: {
-        show: false,
-        text: '',
-        color: '',
-      },
+      snackbar: { show: false, text: '', color: '' },
       rules: {
         required: v => !!v || 'กรุณากรอกข้อมูล',
         email: v => /.+@.+\..+/.test(v) || 'อีเมลไม่ถูกต้อง',
@@ -268,19 +262,16 @@ export default {
   methods: {
     initMap() {
       this.map = L.map('map').setView([13.736717, 100.523186], 6);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-      }).addTo(this.map);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors' }).addTo(this.map);
 
       this.marker = L.marker([13.736717, 100.523186], { draggable: true }).addTo(this.map);
-
       this.marker.on('dragend', () => {
         const { lat, lng } = this.marker.getLatLng();
         this.latitude = lat.toFixed(6);
         this.longitude = lng.toFixed(6);
       });
 
-      this.map.on('click', (e) => {
+      this.map.on('click', e => {
         const { lat, lng } = e.latlng;
         this.marker.setLatLng([lat, lng]);
         this.latitude = lat.toFixed(6);
@@ -290,42 +281,23 @@ export default {
       this.latitude = 13.736717;
       this.longitude = 100.523186;
     },
-
     goToCurrentLocation() {
-      if (!navigator.geolocation) {
-        this.showSnackbar('เบราว์เซอร์ของคุณไม่รองรับ Geolocation', 'error');
-        return;
-      }
+      if (!navigator.geolocation) return this.showSnackbar('เบราว์เซอร์ของคุณไม่รองรับ Geolocation', 'error');
       this.showSnackbar('กำลังค้นหาตำแหน่งปัจจุบัน...', 'info');
 
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        position => {
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
-
           this.map.setView([lat, lng], 16);
           this.marker.setLatLng([lat, lng]);
-
           this.latitude = lat.toFixed(6);
           this.longitude = lng.toFixed(6);
-
           this.showSnackbar('พบตำแหน่งปัจจุบันแล้ว', 'success');
         },
-        (error) => {
-          switch(error.code) {
-            case error.PERMISSION_DENIED:
-              this.showSnackbar('ปฏิเสธการเข้าถึงตำแหน่ง', 'error');
-              break;
-            case error.POSITION_UNAVAILABLE:
-              this.showSnackbar('ไม่สามารถระบุตำแหน่งได้', 'error');
-              break;
-            case error.TIMEOUT:
-              this.showSnackbar('หมดเวลาการค้นหาตำแหน่ง', 'error');
-              break;
-            default:
-              this.showSnackbar('เกิดข้อผิดพลาดในการค้นหาตำแหน่ง', 'error');
-              break;
-          }
+        error => {
+          const messages = ['ปฏิเสธการเข้าถึงตำแหน่ง', 'ไม่สามารถระบุตำแหน่งได้', 'หมดเวลาการค้นหาตำแหน่ง'];
+          this.showSnackbar(messages[error.code - 1] || 'เกิดข้อผิดพลาดในการค้นหาตำแหน่ง', 'error');
         },
         { enableHighAccuracy: true, timeout: 10000 }
       );
@@ -346,15 +318,14 @@ export default {
           longitude: this.longitude,
           password: this.password,
         });
-        
+
         if (response.data.message) {
           await showSuccessAlert(response.data.message);
           this.$router.push('/');
         }
       } catch (err) {
         console.error('Registration error:', err.response?.data || err);
-        const errorMessage = err.response?.data?.message || 'เกิดข้อผิดพลาดในการสมัคร';
-        showErrorAlert(errorMessage);
+        showErrorAlert(err.response?.data?.message || 'เกิดข้อผิดพลาดในการสมัคร');
       } finally {
         this.loading = false;
       }
@@ -372,44 +343,22 @@ export default {
 .asom-theme {
   background: #ffffff;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.15);
+  box-shadow: 0 2px 12px rgba(76, 175, 80, 0.15);
+  transition: all 0.3s ease;
 }
 
 .section-card {
   background: #f1f8e9;
   border: 1px solid rgba(76, 175, 80, 0.1);
   transition: all 0.3s ease;
-  height: 380px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
-.section-card > div:first-child {
-  flex-shrink: 0;
-}
-
-.section-card > div:last-child {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  padding-right: 4px;
-}
-
-.v-text-field {
-  margin-bottom: 8px !important;
-}
-
-.v-text-field .v-messages {
-  min-height: 20px;
-  max-height: 40px;
-  overflow-y: auto;
-}
-
-.asom-label {
-  color: #2e7d32;
-  font-size: 0.75rem;
+.section-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
 }
 
 #map {
@@ -425,12 +374,10 @@ export default {
 
 .register-btn {
   font-weight: 600;
-  text-transform: none;
   border-radius: 4px;
   height: 36px;
   transition: all 0.3s ease;
   background-color: #4caf50 !important;
-  border-color: #4caf50 !important;
 }
 
 .register-btn:hover {
@@ -457,17 +404,11 @@ export default {
   transform: translateY(-1px);
 }
 
-/* Override Vuetify primary color */
 :deep(.v-application .primary) {
   background-color: #4caf50 !important;
-  border-color: #4caf50 !important;
 }
 
 :deep(.v-application .primary--text) {
-  color: #2e7d32 !important;
-}
-
-:deep(.v-application .primary--text .v-icon) {
   color: #2e7d32 !important;
 }
 
@@ -481,5 +422,13 @@ export default {
 
 :deep(.v-text-field--outlined.v-input--dense.v-input--is-focused .v-input__slot) {
   border-color: #4caf50 !important;
+}
+
+.hover-btn {
+  transition: all 0.3s ease;
+}
+.hover-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 6px rgba(76, 175, 80, 0.2);
 }
 </style>

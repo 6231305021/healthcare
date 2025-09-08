@@ -207,7 +207,7 @@
             class="elevation-1"
             >
             <template v-slot:item.blood_pressure="{ item }">
-                {{ item.blood_pressure_systolic }}/{{ item.blood_pressure_diastolic }}
+                {{ item.blood_pressure }}
             </template>
 
             <template v-slot:item.recorded_at="{ item }">
@@ -255,7 +255,7 @@ export default {
       headers: [
         { text: 'วันที่/เวลา', value: 'recorded_at' },
         { text: 'อุณหภูมิ (°C)', value: 'temperature' },
-        { text: 'ความดัน (บน/ล่าง)', value: 'blood_pressure_systolic' },
+        { text: 'ความดัน (บน/ล่าง)', value: 'blood_pressure' },
         { text: 'อัตราชีพจร', value: 'pulse_rate' },
         { text: 'อัตราการหายใจ', value: 'respiratory_rate' },
         { text: 'น้ำตาลในเลือด', value: 'blood_sugar' },
@@ -263,7 +263,6 @@ export default {
     };
   },
   mounted() {
-    // อ่าน patientId จาก query parameter
     this.patientId = this.$route.query.patientId || null;
     if (this.patientId) {
       this.fetchPatientDetails(this.patientId);
@@ -289,47 +288,44 @@ export default {
       try {
         const token = localStorage.getItem('userToken');
         const headers = token ? { 'x-auth-token': token } : {};
-        const response = await axios.get(`/https://healthcare-production-1567.up.railway.app/auth/patients/${id}`, { headers });
-        console.log('Patient data from API:', response.data);
+        const response = await axios.get(`https://healthcare-production-1567.up.railway.app/patients/${id}`, { headers });
         this.patientName = response.data.name || response.data.patient?.name || 'ไม่พบชื่อผู้ป่วย';
       } catch (error) {
         console.error('โหลดชื่อผู้ป่วยล้มเหลว:', error.response?.data || error.message);
         this.patientName = 'ไม่พบผู้ป่วย';
-        if (error.response?.status === 401) {
-          this.logout();
-        }
+        if (error.response?.status === 401) this.logout();
       }
     },
+
     async fetchDailyTrackingData(id) {
       this.loadingData = true;
       try {
         const token = localStorage.getItem('userToken');
         const headers = token ? { 'x-auth-token': token } : {};
-        const response = await axios.get(`https://healthcare-production-1567.up.railway.app/auth/daily-tracking/patient/${id}`, { headers });
-        this.dailyTrackingData = response.data.map(item => ({
+        const response = await axios.get(`https://healthcare-production-1567.up.railway.app/dailyTracking/patient/${id}`, { headers });
+
+        const dataArray = Array.isArray(response.data) ? response.data : response.data.rows || [];
+
+        this.dailyTrackingData = dataArray.map(item => ({
           ...item,
-          blood_pressure_systolic: item.blood_pressure_systolic + '/' + item.blood_pressure_diastolic,
+          blood_pressure: `${item.blood_pressure_systolic}/${item.blood_pressure_diastolic}`,
         }));
       } catch (error) {
         console.error('โหลดข้อมูลติดตามสุขภาพล้มเหลว:', error.response?.data || error.message);
         this.dailyTrackingData = [];
-        if (error.response?.status === 401) {
-          this.logout();
-        }
+        if (error.response?.status === 401) this.logout();
       } finally {
         this.loadingData = false;
       }
     },
+
     async addTrackingData() {
       if (!this.patientId) {
         showWarningAlert('ไม่พบ patientId');
         return;
       }
 
-      // รวมวันที่และเวลาเป็น ISO string
       const recordedAt = new Date(`${this.datePicker}T${this.timePicker}:00`).toISOString();
-
-      // เตรียม payload
       const payload = {
         patient_id: this.patientId,
         temperature: this.newTracking.temperature,
@@ -345,8 +341,12 @@ export default {
       try {
         const token = localStorage.getItem('userToken');
         const headers = token ? { 'x-auth-token': token } : {};
-        const response = await axios.post('api/https://healthcare-production-1567.up.railway.app/auth/daily-tracking', payload, { headers });
-        console.log('บันทึกข้อมูลสำเร็จ', response.data);
+        await axios.post(
+          `https://healthcare-production-1567.up.railway.app/dailyTracking`,
+          payload,
+          { headers }
+        );
+
         showSuccessAlert('บันทึกข้อมูลสำเร็จ');
         this.resetNewTrackingForm();
         this.fetchDailyTrackingData(this.patientId);
@@ -357,6 +357,7 @@ export default {
         this.loading = false;
       }
     },
+
     resetNewTrackingForm() {
       this.newTracking = {
         temperature: null,
@@ -370,6 +371,7 @@ export default {
       this.timePicker = new Date().toTimeString().substr(0, 5);
       this.$refs.trackingForm.resetValidation();
     },
+
     formatDateTime(dateTimeString) {
       if (!dateTimeString) return 'N/A';
       const date = new Date(dateTimeString);
@@ -382,20 +384,25 @@ export default {
         hour12: false,
       });
     },
+
     goToUserPage() {
       this.$router.push('/profile');
     },
+
     logout() {
       localStorage.removeItem('userToken');
       localStorage.removeItem('userData');
       this.$router.push('/');
     },
+
     goToAddPatient() {
       this.$router.push('/Addpatient');
     },
+
     goToPatientInfo() {
       this.$router.push('/patientinfo');
     },
+
     goToMapPage() {
       this.$router.push('/Map');
     },
