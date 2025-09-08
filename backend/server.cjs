@@ -15,7 +15,7 @@ app.use(express.json());
 const db = mysql.createConnection({
   host: process.env.DB_HOST || "mysql.railway.internal",
   user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "iuGIxHXlzLxiJkgZzlwrtEdrvgXaXcuS",
+  password: process.env.DB_PASSWORD || "your_password_here",
   database: process.env.DB_NAME || "railway",
   port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 3306,
 });
@@ -36,17 +36,17 @@ const appointmentsRoutes = require('./routes/appointments');
 const patientRoutes = require('./routes/patient');
 const userRoutes = require('./routes/user');
 
-// Root /auth for authentication
+// Auth
 app.use("/auth", authRoutes);
 
-// Other API routes under /auth with subpaths
-app.use("/auth/geocode", geocodeRoutes);
-app.use("/auth/dailyTracking", dailyTrackingRoutes);
-app.use("/auth/appointments", appointmentsRoutes);
-app.use("/auth/patients", patientRoutes);
-app.use("/auth/users", userRoutes);
+// Other API routes
+app.use("/geocode", geocodeRoutes);
+app.use("/dailyTracking", dailyTrackingRoutes);
+app.use("/appointments", appointmentsRoutes);
+app.use("/patient", patientRoutes);
+app.use("/user", userRoutes);
 
-// -------------------- Test API --------------------
+// Test API
 app.get("/api", (req, res) => {
   db.query("SELECT NOW() AS now", (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -55,13 +55,10 @@ app.get("/api", (req, res) => {
 });
 
 // -------------------- Serve Frontend --------------------
-const distPath = path.join(__dirname, "dist");
+const distPath = path.join(__dirname, "frontend", "dist"); // 👈 ถ้า frontend อยู่ในโฟลเดอร์ frontend
 console.log("📂 Serving frontend from:", distPath);
 
-// Serve static files
 app.use(express.static(distPath));
-
-// Fallback for SPA (Vue/React Router)
 app.get("*", (req, res) => {
   res.sendFile(path.join(distPath, "index.html"));
 });
