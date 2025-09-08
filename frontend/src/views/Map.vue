@@ -2,7 +2,6 @@
   <v-app>
     <div class="background-image"></div>
 
-    <!-- App Bar -->
     <v-app-bar app color="#3B5F6D" dark elevation="4">
       <v-app-bar-nav-icon @click="drawer = !drawer" class="d-md-none"></v-app-bar-nav-icon>
       <v-toolbar-title class="font-weight-bold">
@@ -12,21 +11,24 @@
       <v-spacer></v-spacer>
       <div class="d-none d-md-flex">
         <v-btn text @click="goToHomePage">
-          <v-icon left>mdi-logout</v-icon> ออกจากระบบ
+          <v-icon left>mdi-logout</v-icon>
+          ออกจากระบบ
         </v-btn>
         <v-btn text @click="goToUserPage">
-          <v-icon left>mdi-account</v-icon> ข้อมูลส่วนตัว
+          <v-icon left>mdi-account</v-icon>
+          ข้อมูลส่วนตัว
         </v-btn>
         <v-btn text @click="goToAddPatient">
-          <v-icon left>mdi-account-plus</v-icon> เพิ่มผู้ป่วยใหม่
+          <v-icon left>mdi-account-plus</v-icon>
+          เพิ่มผู้ป่วยใหม่
         </v-btn>
         <v-btn text @click="goToPatientInfo">
-          <v-icon left>mdi-account-multiple</v-icon> ข้อมูลผู้ป่วย
+          <v-icon left>mdi-account-multiple</v-icon>
+          ข้อมูลผู้ป่วย
         </v-btn>
       </div>
     </v-app-bar>
 
-    <!-- Drawer -->
     <v-navigation-drawer v-model="drawer" app temporary>
       <v-list>
         <v-list-item @click="goToHomePage">
@@ -48,7 +50,6 @@
       </v-list>
     </v-navigation-drawer>
 
-    <!-- Main Content -->
     <v-main>
       <v-container class="map-container" fluid>
         <v-row justify="center">
@@ -61,7 +62,6 @@
                 </div>
               </v-card-title>
 
-              <!-- Search -->
               <v-card-text>
                 <v-row justify="center">
                   <v-col cols="12" md="8">
@@ -82,7 +82,8 @@
                           :loading="searching"
                           class="search-btn"
                         >
-                          <v-icon left>mdi-magnify</v-icon> ค้นหา
+                          <v-icon left>mdi-magnify</v-icon>
+                          ค้นหา
                         </v-btn>
                       </template>
                     </v-text-field>
@@ -90,16 +91,15 @@
                 </v-row>
               </v-card-text>
 
-              <!-- Map -->
               <v-card-text>
                 <div id="map" class="map-content"></div>
               </v-card-text>
 
-              <!-- Selected User Info -->
               <v-card-text v-if="selectedUserDetails">
                 <v-card outlined class="coordinate-card pa-4">
                   <v-card-title class="text-h6 primary--text">
-                    <v-icon left color="#3B5F6D">mdi-information</v-icon> ข้อมูลตำแหน่ง
+                    <v-icon left color="#3B5F6D">mdi-information</v-icon>
+                    ข้อมูลตำแหน่ง
                   </v-card-title>
                   <v-card-text>
                     <v-row>
@@ -137,7 +137,6 @@
       </v-container>
     </v-main>
 
-    <!-- Snackbar -->
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="3000" top>
       {{ snackbar.text }}
       <template v-slot:action="{ attrs }">
@@ -150,8 +149,8 @@
 <script>
 import Swal from 'sweetalert2';
 import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 import axios from 'axios';
+import 'leaflet/dist/leaflet.css';
 import { showSuccessAlert, showErrorAlert, showWarningAlert } from '../utils/sweetAlert';
 
 export default {
@@ -159,6 +158,7 @@ export default {
     return {
       drawer: false,
       patients: [],
+      users: [],
       allUsers: [],
       map: null,
       markers: [],
@@ -187,7 +187,7 @@ export default {
 
     async fetchPatients() {
       try {
-        const res = await axios.get(import.meta.env.VITE_API_PATIENT); // ใช้ env ของ Railway
+        const res = await axios.get('https://healthcare-production-1567.up.railway.app/auth/patients');
         this.patients = Array.isArray(res.data) ? res.data : (res.data.patients || []);
         this.mergeAllUsers();
         this.showAllUserLocations();
@@ -198,7 +198,7 @@ export default {
     },
 
     mergeAllUsers() {
-      this.allUsers = this.patients
+      const formattedPatients = this.patients
         .filter(p => p.latitude && p.longitude)
         .map(p => ({
           id: p.id,
@@ -211,6 +211,7 @@ export default {
           image_path: p.image_path,
           community_health_worker: p.community_health_worker
         }));
+      this.allUsers = [...this.users, ...formattedPatients];
     },
 
     handleSearch() {
@@ -219,7 +220,8 @@ export default {
       const query = this.searchQuery.trim().toLowerCase();
       const foundUser = this.allUsers.find(u => {
         const fullName = `${u.first_name || ''} ${u.last_name || ''}`.toLowerCase();
-        return fullName.includes(query);
+        const citizenId = u.citizen_id ? u.citizen_id.toString() : '';
+        return fullName.includes(query) || citizenId === query;
       });
 
       if (foundUser?.latitude && foundUser?.longitude) {
@@ -241,7 +243,7 @@ export default {
       this.allUsers.forEach(user => {
         if (user.latitude && user.longitude) {
           const icon = user.isPatient && user.image_path ? L.icon({
-            iconUrl: `${import.meta.env.VITE_API_PATIENT}${user.image_path}`,
+            iconUrl: `https://healthcare-production-1567.up.railway.app/auth/${user.image_path}`,
             iconSize: [50, 50],
             iconAnchor: [25, 25],
             popupAnchor: [0, -25]
@@ -256,7 +258,7 @@ export default {
           const popupContent = `
             <div class="popup-content">
               <h3>${user.first_name} ${user.last_name}</h3>
-              ${user.isPatient && user.image_path ? `<img src="${import.meta.env.VITE_API_PATIENT}${user.image_path}" alt="รูปผู้ป่วย">` : ''}
+              ${user.isPatient && user.image_path ? `<img src="https://healthcare-production-1567.up.railway.app/auth/${user.image_path}" alt="รูปผู้ป่วย">` : ''}
               <p><strong>ที่อยู่:</strong> ${user.address}</p>
               ${user.isPatient && user.community_health_worker ? `<p><strong>อสม.ที่รับผิดชอบ:</strong> ${user.community_health_worker}</p>` : ''}
             </div>
@@ -283,10 +285,17 @@ export default {
   },
 
   mounted() {
-    this.$nextTick(() => {
-      this.initMap();
-      this.fetchPatients();
-    });
+    this.initMap();
+    this.fetchPatients();
+
+    const lat = parseFloat(this.$route.query.lat);
+    const lng = parseFloat(this.$route.query.lng);
+    const name = this.$route.query.name || '';
+    if (!isNaN(lat) && !isNaN(lng)) {
+      const userIcon = L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/149/149071.png', iconSize: [40,40], iconAnchor: [20,20] });
+      this.map.setView([lat,lng],15);
+      L.marker([lat,lng], { icon: userIcon }).addTo(this.map).bindPopup(`<b>${name}</b>`).openPopup();
+    }
   }
 };
 </script>
@@ -308,4 +317,5 @@ export default {
 .info-value { color:#666; font-size:1.1em; }
 :deep(.leaflet-popup-content img) { width:80px; height:80px; object-fit:cover; border-radius:50%; border:3px solid #3B5F6D; margin:5px 0; }
 :deep(.leaflet-popup-content h3) { margin:0 0 10px 0; color:#3B5F6D; font-size:16px; }
+:deep(.patient-marker), :deep(.default-marker) { border-radius:50%; border:2px solid white; box-shadow:0 2px 4px rgba(0,0,0,0.2); }
 </style>
