@@ -44,4 +44,26 @@ app.use("/user", userRoutes);
 // Test API
 app.get("/api", (req, res) => {
   db.query("SELECT NOW() AS now", (err, results) => {
-    if (err) return res.status(500).json({ error: err.
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ message: "🚀 Backend API connected!", time: results[0].now });
+  });
+});
+
+// -------------------- Serve Frontend --------------------
+// แก้ distPath ให้ตรงกับ backend root
+const distPath = path.join(__dirname, "dist"); // 👈 frontend/dist ย้ายมาที่ backend/dist
+console.log("📂 Serving frontend from:", distPath);
+
+// Serve static files
+app.use(express.static(distPath));
+
+// SPA fallback (ต้องอยู่หลัง API routes)
+app.get("*", (req, res) => {
+  res.sendFile(path.join(distPath, "index.html"));
+});
+
+// -------------------- Start Server --------------------
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, "0.0.0.0", () =>
+  console.log(`🚀 Server running on port ${PORT}`)
+);
