@@ -19,7 +19,27 @@
                   </div>
                   
                   <v-text-field
-                    v-model="citizenId"
+                    v-model="form.first_name"
+                    label="ชื่อ"
+                    :rules="[rules.required]"
+                    outlined
+                    clearable
+                    color="primary"
+                    dense
+                    class="mb-2"
+                  />
+                  <v-text-field
+                    v-model="form.last_name"
+                    label="นามสกุล"
+                    :rules="[rules.required]"
+                    outlined
+                    clearable
+                    color="primary"
+                    dense
+                    class="mb-2"
+                  />
+                  <v-text-field
+                    v-model="form.citizen_id"
                     label="เลขบัตรประชาชน"
                     :rules="[rules.required, rules.citizenId]"
                     maxlength="13"
@@ -28,10 +48,9 @@
                     color="primary"
                     dense
                     class="mb-2"
-                    hide-details="auto"
                   />
                   <v-text-field
-                    v-model="phone"
+                    v-model="form.phone"
                     label="เบอร์โทรศัพท์"
                     :rules="[rules.required, rules.phone]"
                     maxlength="10"
@@ -40,28 +59,6 @@
                     color="primary"
                     dense
                     class="mb-2"
-                    hide-details="auto"
-                  />
-                  <v-text-field
-                    v-model="firstName"
-                    label="ชื่อ"
-                    :rules="[rules.required]"
-                    outlined
-                    clearable
-                    color="primary"
-                    dense
-                    class="mb-2"
-                    hide-details="auto"
-                  />
-                  <v-text-field
-                    v-model="lastName"
-                    label="นามสกุล"
-                    :rules="[rules.required]"
-                    outlined
-                    clearable
-                    color="primary"
-                    dense
-                    hide-details="auto"
                   />
                 </v-card>
               </v-col>
@@ -75,7 +72,7 @@
                   </div>
 
                   <v-text-field
-                    v-model="email"
+                    v-model="form.email"
                     label="อีเมล"
                     prepend-inner-icon="mdi-email"
                     :rules="[rules.required, rules.email]"
@@ -84,10 +81,9 @@
                     color="primary"
                     dense
                     class="mb-2"
-                    hide-details="auto"
                   />
                   <v-text-field
-                    v-model="password"
+                    v-model="form.password"
                     label="รหัสผ่าน"
                     :type="showPassword ? 'text' : 'password'"
                     :append-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
@@ -98,10 +94,9 @@
                     color="primary"
                     dense
                     class="mb-2"
-                    hide-details="auto"
                   />
                   <v-text-field
-                    v-model="confirmPassword"
+                    v-model="form.confirm_password"
                     label="ยืนยันรหัสผ่าน"
                     :type="showConfirmPassword ? 'text' : 'password'"
                     :append-icon="showConfirmPassword ? 'mdi-eye-off' : 'mdi-eye'"
@@ -112,73 +107,19 @@
                     color="primary"
                     dense
                     class="mb-2"
-                    hide-details="auto"
                   />
                   <v-text-field
-                    v-model="location"
+                    v-model="form.address"
                     label="ที่อยู่โดยละเอียด"
                     :rules="[rules.required]"
                     outlined
                     clearable
                     color="primary"
                     dense
-                    hide-details="auto"
                   />
                 </v-card>
               </v-col>
             </v-row>
-
-            <!-- Address & Map -->
-            <v-card flat class="mb-3 pa-2 rounded-lg section-card map-card">
-              <div class="text-subtitle-2 font-weight-bold mb-2 primary--text">
-                <v-icon left small>mdi-map-marker</v-icon>
-                ข้อมูลที่อยู่
-              </div>
-
-              <v-row dense>
-                <v-col cols="12" md="8" class="mx-auto">
-                  <div class="d-flex align-center mb-2">
-                    <label class="font-weight-bold asom-label mr-2">ระบุตำแหน่งบ้าน</label>
-                    <v-btn
-                      color="primary"
-                      @click="goToCurrentLocation"
-                      outlined
-                      x-small
-                      elevation="2"
-                      class="ml-auto hover-btn"
-                    >
-                      <v-icon left x-small>mdi-crosshairs-gps</v-icon>
-                      ตำแหน่งปัจจุบัน
-                    </v-btn>
-                  </div>
-                  <div id="map" class="mb-4"></div>
-                  <v-row dense>
-                    <v-col cols="6">
-                      <v-text-field
-                        v-model="latitude"
-                        label="ละติจูด"
-                        readonly
-                        outlined
-                        color="primary"
-                        dense
-                        hide-details="auto"
-                      />
-                    </v-col>
-                    <v-col cols="6">
-                      <v-text-field
-                        v-model="longitude"
-                        label="ลองจิจูด"
-                        readonly
-                        outlined
-                        color="primary"
-                        dense
-                        hide-details="auto"
-                      />
-                    </v-col>
-                  </v-row>
-                </v-col>
-              </v-row>
-            </v-card>
 
             <!-- Register Button -->
             <v-btn
@@ -221,30 +162,26 @@
 </template>
 
 <script>
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import axios from 'axios';
+import { registerUser } from '../api';
 import { showSuccessAlert, showErrorAlert } from '../utils/sweetAlert';
 
 export default {
   data() {
     return {
-      citizenId: '',
-      firstName: '',
-      lastName: '',
-      phone: '',
-      email: '',
-      location: '',
-      latitude: '',
-      longitude: '',
-      password: '',
-      confirmPassword: '',
-      showPassword: false,
-      showConfirmPassword: false,
+      form: {
+        first_name: '',
+        last_name: '',
+        citizen_id: '',
+        phone: '',
+        email: '',
+        address: '',
+        password: '',
+        confirm_password: ''
+      },
       valid: false,
       loading: false,
-      map: null,
-      marker: null,
+      showPassword: false,
+      showConfirmPassword: false,
       snackbar: { show: false, text: '', color: '' },
       rules: {
         required: v => !!v || 'กรุณากรอกข้อมูล',
@@ -252,97 +189,34 @@ export default {
         phone: v => /^0\d{9}$/.test(v) || 'เบอร์ไม่ถูกต้อง',
         citizenId: v => /^\d{13}$/.test(v) || 'ต้องมี 13 หลัก',
         min: v => v.length >= 6 || 'รหัสผ่านอย่างน้อย 6 ตัวอักษร',
-        match: v => v === this.password || 'รหัสผ่านไม่ตรงกัน',
-      },
+        match: v => v === this.form.password || 'รหัสผ่านไม่ตรงกัน',
+      }
     };
   },
-  mounted() {
-    this.initMap();
-  },
   methods: {
-    initMap() {
-      this.map = L.map('map').setView([13.736717, 100.523186], 6);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors' }).addTo(this.map);
-      this.marker = L.marker([13.736717, 100.523186], { draggable: true }).addTo(this.map);
-      this.marker.on('dragend', () => {
-        const { lat, lng } = this.marker.getLatLng();
-        this.latitude = lat.toFixed(6);
-        this.longitude = lng.toFixed(6);
-      });
-      this.map.on('click', e => {
-        const { lat, lng } = e.latlng;
-        this.marker.setLatLng([lat, lng]);
-        this.latitude = lat.toFixed(6);
-        this.longitude = lng.toFixed(6);
-      });
-      this.latitude = 13.736717;
-      this.longitude = 100.523186;
-    },
-    goToCurrentLocation() {
-      if (!navigator.geolocation) return this.showSnackbar('เบราว์เซอร์ของคุณไม่รองรับ Geolocation', 'error');
-      this.showSnackbar('กำลังค้นหาตำแหน่งปัจจุบัน...', 'info');
-      navigator.geolocation.getCurrentPosition(
-        position => {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
-          this.map.setView([lat, lng], 16);
-          this.marker.setLatLng([lat, lng]);
-          this.latitude = lat.toFixed(6);
-          this.longitude = lng.toFixed(6);
-          this.showSnackbar('พบตำแหน่งปัจจุบันแล้ว', 'success');
-        },
-        error => {
-          const messages = ['ปฏิเสธการเข้าถึงตำแหน่ง', 'ไม่สามารถระบุตำแหน่งได้', 'หมดเวลาการค้นหาตำแหน่ง'];
-          this.showSnackbar(messages[error.code - 1] || 'เกิดข้อผิดพลาดในการค้นหาตำแหน่ง', 'error');
-        },
-        { enableHighAccuracy: true, timeout: 10000 }
-      );
-    },
     async register() {
-      if (!this.valid) return;
+      if (!this.$refs.form.validate()) return;
       this.loading = true;
       try {
-        const response = await axios.post('https://healthcare-production-1567.up.railway.app/auth/register', {
-          citizenId: this.citizenId,
-          firstName: this.firstName,
-          lastName: this.lastName,
-          phone: this.phone,
-          email: this.email,
-          location: this.location,
-          latitude: this.latitude,
-          longitude: this.longitude,
-          password: this.password,
-        });
-        if (response.data.message) {
-          await showSuccessAlert(response.data.message);
+        const { confirm_password, ...payload } = this.form;
+        const res = await registerUser(payload);
+        if (res?.message) {
+          await showSuccessAlert(res.message);
           this.$router.push('/');
         }
       } catch (err) {
-        console.error('Registration error:', err.response?.data || err);
-        showErrorAlert(err.response?.data?.message || 'เกิดข้อผิดพลาดในการสมัคร');
+        console.error('Registration error:', err);
+        showErrorAlert(err.message || 'เกิดข้อผิดพลาดในการสมัคร');
       } finally {
         this.loading = false;
       }
-    },
-    showSnackbar(text, color) {
-      this.snackbar.text = text;
-      this.snackbar.color = color;
-      this.snackbar.show = true;
-    },
-  },
+    }
+  }
 };
 </script>
 
 <style scoped>
-.asom-theme { background: #fff; border-radius: 8px; box-shadow: 0 2px 12px rgba(76, 175, 80, 0.15); transition: all 0.3s ease; }
-.section-card { background: #f1f8e9; border: 1px solid rgba(76, 175, 80, 0.1); transition: all 0.3s ease; display: flex; flex-direction: column; overflow: hidden; }
-.section-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2); }
-#map { height: 200px; border: 1px solid #4caf50; border-radius: 6px; transition: all 0.3s ease; }
-#map:hover { box-shadow: 0 1px 4px rgba(76, 175, 80, 0.2); }
-.register-btn { font-weight: 600; border-radius: 4px; height: 36px; transition: all 0.3s ease; background-color: #4caf50 !important; }
-.register-btn:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3); background-color: #43a047 !important; }
-.back-btn { transition: all 0.3s ease; height: 32px; color: #2e7d32 !important; }
-.back-btn:hover { background: rgba(76, 175, 80, 0.1); }
-.hover-btn { transition: all 0.3s ease; }
-.hover-btn:hover { transform: scale(1.05); box-shadow: 0 2px 6px rgba(76, 175, 80, 0.2); }
+.register-btn { font-weight: 600; border-radius: 4px; height: 36px; }
+.register-btn:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3); }
+.back-btn { height: 32px; color: #2e7d32 !important; }
 </style>
