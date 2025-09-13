@@ -1,123 +1,93 @@
-// routes/appointments.js
+// backend/routes/appointments.js
 const express = require('express');
 const router = express.Router();
-const db = require('../db'); // ใช้ db จาก server.cjs
+const db = require('../db');
 
-// GET patient info by id
+// -------------------- Get all appointments --------------------
+router.get('/', async (req, res) => {
+  try {
+    const { patient_id } = req.query; // รับ query param patient_id
+    let query = `SELECT * FROM appointments`;
+    const params = [];
+
+    if (patient_id) {
+      query += ` WHERE patient_id = ?`;
+      params.push(patient_id);
+    }
+
+    query += ` ORDER BY appointment_date DESC, appointment_time DESC`;
+
+    const [appointments] = await db.query(query, params);
+
+    res.json(appointments);
+  } catch (err) {
+    console.error('Error fetching appointments:', err);
+    res.status(500).json({ message: 'เกิดข้อผิดพลาดในการดึงประวัติการนัดหมาย' });
+  }
+});
+
+// -------------------- Get appointment by ID --------------------
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const [rows] = await db.query('SELECT id, name FROM patients WHERE id = ?', [id]);
-    if (rows.length === 0) {
-      return res.status(404).json({ message: 'Patient not found' });
-    }
+    const [rows] = await db.query('SELECT * FROM appointments WHERE id = ?', [id]);
+    if (rows.length === 0) return res.status(404).json({ message: 'ไม่พบข้อมูลการนัดหมาย' });
     res.json(rows[0]);
-  } catch (error) {
-    console.error('Error fetching patient:', error);
-    res.status(500).json({ message: 'Server error fetching patient details', error: error.message });
+  } catch (err) {
+    console.error('Error fetching appointment:', err);
+    res.status(500).json({ message: 'เกิดข้อผิดพลาดในการดึงข้อมูลการนัดหมาย' });
   }
 });
 
-// GET all appointments for a specific patient
-router.get('/patient/:patientId', async (req, res) => {
-  const { patientId } = req.params;
-  try {
-    const [rows] = await db.query(
-      'SELECT * FROM appointments WHERE patient_id = ? ORDER BY appointment_date DESC, appointment_time DESC',
-      [patientId]
-    );
-    res.json(rows);
-  } catch (error) {
-    console.error('Error fetching appointments:', error);
-    res.status(500).json({ message: 'Server error fetching appointments', error: error.message });
-  }
-});
-
-// PUT update appointment
-router.put('/:id', async (req, res) => {
-  const { id } = req.params;
-  const {
-    hn_number,
-    rights,
-    appointment_date,
-    appointment_time,
-    reason,
-    appointed_by,
-    contact_location,
-    other_details,
-    diagnosis,
-    status
-  } = req.body;
-
-  if (!hn_number || !rights || !appointment_date || !appointment_time || !status) {
-    return res.status(400).json({ message: 'Missing required appointment fields.' });
-  }
-
-  try {
-    const [result] = await db.query(
-      `UPDATE appointments SET
-        hn_number = ?, rights = ?, appointment_date = ?, appointment_time = ?, reason = ?, appointed_by = ?, contact_location = ?, other_details = ?, diagnosis = ?, status = ?
-       WHERE id = ?`,
-      [hn_number, rights, appointment_date, appointment_time, reason, appointed_by, contact_location, other_details, diagnosis, status, id]
-    );
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'Appointment not found' });
-    }
-
-    res.json({ message: 'Appointment updated successfully' });
-  } catch (error) {
-    console.error('Error updating appointment:', error);
-    res.status(500).json({ message: 'Server error updating appointment', error: error.message });
-  }
-});
-
-// POST new appointment
+// -------------------- Create appointment --------------------
 router.post('/', async (req, res) => {
-  const {
-    patient_id,
-    hn_number,
-    rights,
-    appointment_date,
-    appointment_time,
-    reason,
-    appointed_by,
-    contact_location,
-    other_details,
-    diagnosis,
-    status
-  } = req.body;
-
-  if (!patient_id || !hn_number || !rights || !appointment_date || !appointment_time || !status) {
-    return res.status(400).json({ message: 'Missing required appointment fields.' });
+  const { patient_id, appointment_date, appointment_time, reason, appointed_by, contact_location, other_details, diagnosis, status } = req.body;
+  if (!patient_id || !appointment_date) {
+    return res.status(400).json({ message: 'Patient ID และวันที่นัดหมายต้องระบุ' });
   }
-
   try {
     const [result] = await db.query(
       `INSERT INTO appointments
-       (patient_id, hn_number, rights, appointment_date, appointment_time, reason, appointed_by, contact_location, other_details, diagnosis, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [patient_id, hn_number, rights, appointment_date, appointment_time, reason, appointed_by, contact_location, other_details, diagnosis, status]
+       (patient_id, appointment_date, appointment_time, reason, appointed_by, contact_location, other_details, diagnosis, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [patient_id, appointment_date, appointment_time, reason, appointed_by, contact_location, other_details, diagnosis, status]
     );
-    res.status(201).json({ message: 'Appointment added successfully', appointmentId: result.insertId });
-  } catch (error) {
-    console.error('Error adding appointment:', error);
-    res.status(500).json({ message: 'Server error adding appointment', error: error.message });
+    res.status(201).json({ message: 'สร้างการนัดหมายสำเร็จ', appointmentId: result.insertId });
+  } catch (err) {
+    console.error('Error creating appointment:', err);
+    res.status(500).json({ message: 'เกิดข้อผิดพลาดในการสร้างการนัดหมาย' });
   }
 });
 
-// DELETE appointment
+// -------------------- Update appointment --------------------
+router.put('/:id', async (req, res) => {
+  const { id } = req.params;
+  const { appointment_date, appointment_time, reason, appointed_by, contact_location, other_details, diagnosis, status } = req.body;
+  try {
+    const [result] = await db.query(
+      `UPDATE appointments SET
+       appointment_date = ?, appointment_time = ?, reason = ?, appointed_by = ?, contact_location = ?, other_details = ?, diagnosis = ?, status = ?
+       WHERE id = ?`,
+      [appointment_date, appointment_time, reason, appointed_by, contact_location, other_details, diagnosis, status, id]
+    );
+    if (result.affectedRows === 0) return res.status(404).json({ message: 'ไม่พบข้อมูลการนัดหมายที่ต้องการแก้ไข' });
+    res.json({ message: 'อัปเดตการนัดหมายสำเร็จ' });
+  } catch (err) {
+    console.error('Error updating appointment:', err);
+    res.status(500).json({ message: 'เกิดข้อผิดพลาดในการอัปเดตการนัดหมาย' });
+  }
+});
+
+// -------------------- Delete appointment --------------------
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
   try {
     const [result] = await db.query('DELETE FROM appointments WHERE id = ?', [id]);
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'Appointment not found' });
-    }
-    res.json({ message: 'Appointment deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting appointment:', error);
-    res.status(500).json({ message: 'Server error deleting appointment', error: error.message });
+    if (result.affectedRows === 0) return res.status(404).json({ message: 'ไม่พบการนัดหมายที่ต้องการลบ' });
+    res.json({ message: 'ลบการนัดหมายสำเร็จ' });
+  } catch (err) {
+    console.error('Error deleting appointment:', err);
+    res.status(500).json({ message: 'เกิดข้อผิดพลาดในการลบการนัดหมาย' });
   }
 });
 

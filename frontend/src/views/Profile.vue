@@ -223,11 +223,7 @@ export default {
         },
         phoneNumber: value => /^\d{10}$/.test(value) || 'กรุณากรอกเบอร์โทรศัพท์ 10 หลัก'
       },
-      snackbar: {
-        show: false,
-        text: '',
-        color: ''
-      }
+      snackbar: { show: false, text: '', color: '' }
     };
   },
   mounted() {
@@ -246,7 +242,10 @@ export default {
         const res = await axios.get(`https://healthcare-production-1567.up.railway.app/auth/users/${userId}`);
         if (res.data?.user) this.user = { ...res.data.user, citizen_id: String(res.data.user.citizen_id) };
         else showWarningAlert('ไม่พบข้อมูลผู้ใช้งาน');
-      } catch (error) { console.error(error); showErrorAlert('เกิดข้อผิดพลาดในการโหลดข้อมูล'); }
+      } catch (error) {
+        console.error(error);
+        showErrorAlert('เกิดข้อผิดพลาดในการโหลดข้อมูล');
+      }
     },
     async saveProfile() {
       if (!this.$refs.profileForm.validate()) return showWarningAlert('กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง');
@@ -319,15 +318,9 @@ export default {
 
 .custom-field { margin-bottom: 12px; }
 
-/* Vuetify field overrides */
 :deep(.v-input--outlined fieldset) { border-color: #92D7D0 !important; }
 :deep(.v-input--is-focused.v-input--outlined fieldset) { border-color: #3B5F6D !important; border-width: 2px !important; }
 :deep(.v-label) { color: #3B5F6D !important; }
 :deep(.v-input__icon--prepend-inner .v-icon) { color: #92D7D0 !important; }
 :deep(.v-text-field.v-input--is-disabled .v-input__control) { opacity: 0.7; }
-
-@media (max-width: 960px) {
-  .v-card-title { font-size: 1.1rem; }
-  .hover-btn { font-size: 0.9rem; padding: 4px 12px; }
-}
 </style>
