@@ -9,6 +9,7 @@ const API_GEOCODE = import.meta.env.VITE_API_GEOCODE;
 const API_USER = import.meta.env.VITE_API_USER;
 
 // Debug env variables
+console.log("API_AUTH =", import.meta.env.VITE_API_URL);
 console.log("API_AUTH =", API_AUTH);
 console.log("API_PATIENT =", API_PATIENT);
 console.log("API_APPOINTMENTS =", API_APPOINTMENTS);
