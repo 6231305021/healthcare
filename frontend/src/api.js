@@ -1,5 +1,6 @@
 // frontend/src/api.js
 
+// -------------------- Base URLs from .env --------------------
 const API_AUTH = import.meta.env.VITE_API_URL;
 const API_PATIENT = import.meta.env.VITE_API_PATIENT;
 const API_APPOINTMENTS = import.meta.env.VITE_API_APPOINTMENTS;
@@ -7,11 +8,19 @@ const API_TRACKING = import.meta.env.VITE_API_TRACKING;
 const API_GEOCODE = import.meta.env.VITE_API_GEOCODE;
 const API_USER = import.meta.env.VITE_API_USER;
 
+// Debug env variables
+console.log("API_AUTH =", API_AUTH);
+console.log("API_PATIENT =", API_PATIENT);
+console.log("API_APPOINTMENTS =", API_APPOINTMENTS);
+console.log("API_TRACKING =", API_TRACKING);
+console.log("API_GEOCODE =", API_GEOCODE);
+console.log("API_USER =", API_USER);
+
 // -------------------- Helper --------------------
 async function handleRequest(url, options = {}) {
   try {
     const res = await fetch(url, options);
-    const text = await res.text(); // รับ text ก่อน
+    const text = await res.text();
     let data;
     try { data = JSON.parse(text); } catch { data = text; }
     if (!res.ok) throw new Error(data?.message || data?.error || 'API request failed');
@@ -31,7 +40,6 @@ export async function registerUser(data) {
   });
 }
 
-// Login by citizenId
 export async function loginUser(data) {
   return handleRequest(`${API_AUTH}/login`, {
     method: 'POST',
@@ -53,7 +61,6 @@ export async function createPatient(data, imageFile) {
   const formData = new FormData();
   for (const key in data) formData.append(key, data[key]);
   if (imageFile) formData.append('patientImage', imageFile);
-
   return handleRequest(`${API_PATIENT}`, { method: 'POST', body: formData });
 }
 
@@ -61,7 +68,6 @@ export async function updatePatient(id, data, imageFile) {
   const formData = new FormData();
   for (const key in data) formData.append(key, data[key]);
   if (imageFile) formData.append('patientImage', imageFile);
-
   return handleRequest(`${API_PATIENT}${id}`, { method: 'PUT', body: formData });
 }
 
