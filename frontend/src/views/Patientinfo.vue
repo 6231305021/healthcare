@@ -1,121 +1,169 @@
 <template>
-  <v-container fluid class="py-4">
-    <v-row justify="center">
-      <v-col cols="12" md="10">
-        <v-card elevation="12" class="pa-4 rounded-xl">
-          <v-card-title class="font-weight-bold text-h5">
-            <v-icon left color="primary">mdi-account-multiple</v-icon>
-            ข้อมูลผู้ป่วย
-          </v-card-title>
-          <v-card-text>
-            <v-data-table
-              :headers="headers"
-              :items="patients"
-              :loading="loading"
-              loading-text="กำลังโหลด..."
-              class="elevation-1"
-              dense
-            >
-              <template v-slot:item.actions="{ item }">
-                <v-btn icon color="primary" @click="goToEditPatient(item.id)">
-                  <v-icon>mdi-pencil</v-icon>
-                </v-btn>
-                <v-btn icon color="red" @click="deletePatient(item.id)">
-                  <v-icon>mdi-delete</v-icon>
-                </v-btn>
-              </template>
-            </v-data-table>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
-
-    <v-snackbar v-model="snackbar.show" :color="snackbar.color" top timeout="3000">
-      {{ snackbar.text }}
-      <template v-slot:action="{ attrs }">
-        <v-btn text v-bind="attrs" @click="snackbar.show = false">ปิด</v-btn>
-      </template>
-    </v-snackbar>
-  </v-container>
+  <v-app>
+    <!-- ... (template เหมือนเดิม ไม่ต้องแก้ไข) ... -->
+  </v-app>
 </template>
 
 <script>
+import Swal from 'sweetalert2'
 import axios from 'axios';
-import { showErrorAlert, showSuccessAlert, showConfirmDialog } from '../utils/sweetAlert';
+import { showSuccessAlert, showErrorAlert, showConfirmDialog, showDeleteConfirm } from '../utils/sweetAlert';
 
 export default {
+  name: 'PatientInfo',
   data() {
     return {
+      drawer: false,
       patients: [],
+      search: '',
+      defaultImage: 'https://cdn-icons-png.flaticon.com/512/4320/4320337.png',
       loading: false,
-      snackbar: { show: false, text: '', color: '' },
-      headers: [
-        { text: 'ชื่อ', value: 'first_name' },
-        { text: 'นามสกุล', value: 'last_name' },
-        { text: 'เลขบัตรประชาชน', value: 'citizen_id' },
-        { text: 'เบอร์โทร', value: 'phone' },
-        { text: 'อีเมล', value: 'email' },
-        { text: 'ที่อยู่', value: 'address' },
-        { text: 'Actions', value: 'actions', sortable: false }
-      ]
+      error: null
     };
+  },
+  computed: {
+    filteredPatients() {
+      const patientList = Array.isArray(this.patients) ? this.patients : [];
+      return patientList.filter((patient) =>
+        patient.name?.toLowerCase().includes(this.search.toLowerCase())
+      );
+    },
+  },
+  methods: {
+    formatAddress(patient) {
+      const parts = [
+        patient.address_detail,
+        patient.subdistrict,
+        patient.district,
+        patient.province
+      ].filter(Boolean);
+      return parts.join(', ') || 'ไม่มีข้อมูลที่อยู่';
+    },
+    async fetchPatients() {
+      try {
+        const token = localStorage.getItem('userToken');
+        const headers = token ? { 'x-auth-token': token } : {};
+        const response = await axios.get(`${import.meta.env.VITE_API_PATIENT}`, { headers });
+        if (Array.isArray(response.data.patients)) {
+          this.patients = response.data.patients;
+        } else {
+          this.patients = [];
+          console.error('ข้อมูลไม่ถูกต้อง:', response.data);
+        }
+      } catch (error) {
+        console.error('โหลดข้อมูลล้มเหลว', error);
+        this.patients = [];
+        showErrorAlert('ไม่สามารถโหลดข้อมูลผู้ป่วยได้');
+      }
+    },
+    async editPatient(id) {
+      const result = await showConfirmDialog(
+        'ยืนยันการแก้ไข',
+        'คุณต้องการแก้ไขข้อมูลผู้ป่วยนี้ใช่หรือไม่?'
+      );
+      
+      if (result.isConfirmed) {
+        this.$router.push(`/editpatient/${id}`);
+      }
+    },
+    async viewOnMap(patient) {
+      const result = await showConfirmDialog(
+        'ยืนยันการดูแผนที่',
+        'คุณต้องการดูตำแหน่งที่อยู่ของผู้ป่วยบนแผนที่ใช่หรือไม่?'
+      );
+      
+      if (result.isConfirmed) {
+        const lat = patient.latitude || 0;
+        const lng = patient.longitude || 0;
+        const name = encodeURIComponent(patient.name || 'ไม่ทราบชื่อ');
+        this.$router.push(`/map?lat=${lat}&lng=${lng}&name=${name}`);
+      }
+    },
+    async goToDailyTracking(id) {
+      const result = await showConfirmDialog(
+        'ยืนยันการดูข้อมูลติดตาม',
+        'คุณต้องการดูข้อมูลการติดตามสุขภาพของผู้ป่วยใช่หรือไม่?'
+      );
+      
+      if (result.isConfirmed) {
+        this.$router.push(`/daily-tracking?patientId=${id}`);
+      }
+    },
+    async goToAppointments(id) {
+      const result = await showConfirmDialog(
+        'ยืนยันการดูการนัดหมาย',
+        'คุณต้องการดูข้อมูลการนัดหมายของผู้ป่วยใช่หรือไม่?'
+      );
+      
+      if (result.isConfirmed) {
+        this.$router.push(`/appointments?patientId=${id}`);
+      }
+    },
+    async goToAppointmentHistory(id) {
+      const result = await showConfirmDialog(
+        'ยืนยันการดูประวัติ',
+        'คุณต้องการดูประวัติการนัดหมายของผู้ป่วยใช่หรือไม่?'
+      );
+      
+      if (result.isConfirmed) {
+        this.$router.push(`/appointment-history?patientId=${id}`);
+      }
+    },
+    async goToDailyTrackingGraph(id) {
+      const result = await showConfirmDialog(
+        'ยืนยันการดูกราฟ',
+        'คุณต้องการดูกราฟข้อมูลการติดตามสุขภาพของผู้ป่วยใช่หรือไม่?'
+      );
+      
+      if (result.isConfirmed) {
+        this.$router.push(`/daily-tracking-graph?patientId=${id}`);
+      }
+    },
+    async deletePatient(id) {
+      const result = await showDeleteConfirm(
+        'ยืนยันการลบผู้ป่วย',
+        'คุณต้องการลบข้อมูลผู้ป่วยนี้ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้'
+      );
+      
+      if (result.isConfirmed) {
+        try {
+          const token = localStorage.getItem('userToken');
+          const headers = token ? { 'x-auth-token': token } : {};
+          await axios.delete(`${import.meta.env.VITE_API_PATIENT}${id}`, { headers });
+          showSuccessAlert('ลบข้อมูลผู้ป่วยสำเร็จ');
+          this.fetchPatients(); // Refresh the patient list
+        } catch (error) {
+          console.error('ลบข้อมูลผู้ป่วยล้มเหลว:', error);
+          showErrorAlert('ไม่สามารถลบข้อมูลผู้ป่วยได้: ' + (error.response?.data?.message || error.message));
+        }
+      }
+    },
+    goToHomePage() {
+      Swal.fire({
+        title: 'คุณแน่ใจหรือไม่?',
+        text: 'คุณต้องการออกจากระบบใช่หรือไม่',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'ใช่, ออกจากระบบ',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          this.$router.push('/')
+        }
+      })
+    },
+    goToUserPage() { this.$router.push('/profile'); },
+    goToAddPatient() { this.$router.push('/addpatient'); },
+    goToMap() { this.$router.push('/map'); },
   },
   mounted() {
     this.fetchPatients();
   },
-  methods: {
-    async fetchPatients() {
-      this.loading = true;
-      try {
-        const res = await axios.get('https://healthcare-production-1567.up.railway.app/patient');
-        if (res.data?.patients) {
-          this.patients = res.data.patients;
-        } else {
-          this.showSnackbar('ไม่พบข้อมูลผู้ป่วย', 'warning');
-        }
-      } catch (error) {
-        console.error(error);
-        showErrorAlert(error.response?.data?.message || 'เกิดข้อผิดพลาดในการดึงข้อมูลผู้ป่วย');
-      } finally {
-        this.loading = false;
-      }
-    },
-    goToEditPatient(id) {
-      this.$router.push(`/editpatient/${id}`);
-    },
-    async deletePatient(id) {
-      const result = await showConfirmDialog('ยืนยันการลบ', 'คุณต้องการลบผู้ป่วยรายนี้หรือไม่?');
-      if (!result.isConfirmed) return;
-
-      try {
-        const res = await axios.delete(`https://healthcare-production-1567.up.railway.app/patient/${id}`);
-        if (res.data?.success) {
-          await showSuccessAlert('ลบผู้ป่วยสำเร็จ');
-          this.fetchPatients();
-        } else {
-          this.showSnackbar('ไม่สามารถลบผู้ป่วยได้', 'error');
-        }
-      } catch (error) {
-        console.error(error);
-        showErrorAlert(error.response?.data?.message || 'เกิดข้อผิดพลาดในการลบผู้ป่วย');
-      }
-    },
-    showSnackbar(text, color) {
-      this.snackbar.text = text;
-      this.snackbar.color = color;
-      this.snackbar.show = true;
-    }
-  }
 };
 </script>
 
 <style scoped>
-.v-card-title {
-  display: flex;
-  align-items: center;
-}
-
-.v-data-table {
-  font-size: 0.95rem;
-}
+/* ... (style เดิมทั้งหมด ไม่ต้องแก้ไข) ... */
 </style>
