@@ -9,15 +9,18 @@
           </v-card-title>
 
           <v-form ref="loginForm" v-model="valid" lazy-validation>
+            <!-- เลขบัตรประชาชน -->
             <v-text-field
-              v-model="email"
-              label="อีเมล"
-              prepend-inner-icon="mdi-email"
-              :rules="[rules.required, rules.email]"
+              v-model="citizenId"
+              label="เลขบัตรประชาชน"
+              prepend-inner-icon="mdi-card-account-details"
+              :rules="[rules.required, rules.citizenId]"
               outlined
               dense
               class="mb-3"
             />
+
+            <!-- รหัสผ่าน -->
             <v-text-field
               v-model="password"
               label="รหัสผ่าน"
@@ -64,11 +67,12 @@
 <script>
 import axios from 'axios';
 import { showErrorAlert, showSuccessAlert } from '../utils/sweetAlert';
+const API_AUTH = import.meta.env.VITE_API_URL; // เช่น https://healthcare-production-1567.up.railway.app/auth
 
 export default {
   data() {
     return {
-      email: '',
+      citizenId: '',
       password: '',
       showPassword: false,
       valid: false,
@@ -76,8 +80,8 @@ export default {
       snackbar: { show: false, text: '', color: '' },
       rules: {
         required: v => !!v || 'กรุณากรอกข้อมูล',
-        email: v => /.+@.+\..+/.test(v) || 'อีเมลไม่ถูกต้อง',
         min: v => v.length >= 6 || 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร',
+        citizenId: v => /^\d{13}$/.test(v) || 'เลขบัตรประชาชนต้องมี 13 ตัวเลข',
       },
     };
   },
@@ -87,8 +91,8 @@ export default {
 
       this.loading = true;
       try {
-        const res = await axios.post('https://healthcare-production-1567.up.railway.app/auth/login', {
-          email: this.email,
+        const res = await axios.post(`${API_AUTH}/login`, {
+          citizenId: this.citizenId,
           password: this.password,
         });
 
@@ -98,19 +102,14 @@ export default {
           await showSuccessAlert('เข้าสู่ระบบสำเร็จ');
           this.$router.push('/profile');
         } else {
-          showErrorAlert('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+          showErrorAlert('เลขบัตรประชาชนหรือรหัสผ่านไม่ถูกต้อง');
         }
       } catch (err) {
-        console.error(err);
+        console.error('Login error:', err.response?.data || err.message);
         showErrorAlert(err.response?.data?.message || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
       } finally {
         this.loading = false;
       }
-    },
-    showSnackbar(text, color) {
-      this.snackbar.text = text;
-      this.snackbar.color = color;
-      this.snackbar.show = true;
     }
   }
 };
