@@ -11,8 +11,10 @@ const API_USER = import.meta.env.VITE_API_USER;
 async function handleRequest(url, options = {}) {
   try {
     const res = await fetch(url, options);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || data.error || 'API request failed');
+    const text = await res.text(); // รับ text ก่อน
+    let data;
+    try { data = JSON.parse(text); } catch { data = text; }
+    if (!res.ok) throw new Error(data?.message || data?.error || 'API request failed');
     return data;
   } catch (err) {
     console.error('API error:', err.message);
@@ -29,6 +31,7 @@ export async function registerUser(data) {
   });
 }
 
+// Login by citizenId
 export async function loginUser(data) {
   return handleRequest(`${API_AUTH}/login`, {
     method: 'POST',
@@ -51,10 +54,7 @@ export async function createPatient(data, imageFile) {
   for (const key in data) formData.append(key, data[key]);
   if (imageFile) formData.append('patientImage', imageFile);
 
-  return handleRequest(`${API_PATIENT}`, {
-    method: 'POST',
-    body: formData,
-  });
+  return handleRequest(`${API_PATIENT}`, { method: 'POST', body: formData });
 }
 
 export async function updatePatient(id, data, imageFile) {
@@ -62,10 +62,7 @@ export async function updatePatient(id, data, imageFile) {
   for (const key in data) formData.append(key, data[key]);
   if (imageFile) formData.append('patientImage', imageFile);
 
-  return handleRequest(`${API_PATIENT}${id}`, {
-    method: 'PUT',
-    body: formData,
-  });
+  return handleRequest(`${API_PATIENT}${id}`, { method: 'PUT', body: formData });
 }
 
 export async function deletePatient(id) {
@@ -73,8 +70,10 @@ export async function deletePatient(id) {
 }
 
 // -------------------- Appointments --------------------
-export async function getAppointments() {
-  return handleRequest(`${API_APPOINTMENTS}`);
+export async function getAppointments(params = {}) {
+  const url = new URL(`${API_APPOINTMENTS}`);
+  Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+  return handleRequest(url);
 }
 
 export async function createAppointment(data) {
