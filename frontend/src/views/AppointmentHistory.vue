@@ -76,7 +76,6 @@
               </v-btn>
             </div>
           </v-card-title>
-
           <v-text-field
             v-model="search"
             label="ค้นหาสาเหตุการนัด, ผู้นัด หรือสถานะ"
@@ -85,58 +84,28 @@
             dense
             class="mb-4"
           />
-
-          <!-- ตารางแสดงประวัติการนัดหมาย -->
           <v-data-table
             :headers="headers"
             :items="filteredAppointments"
             :loading="loadingData"
+            :search="search"
             class="elevation-1"
-            item-key="id"
             :items-per-page="10"
+            :footer-props="{
+                'items-per-page-text': 'รายการต่อหน้า',
+                'items-per-page-options': [5, 10, 25, 50, -1]
+            }"
             no-data-text="ไม่พบประวัติการนัดหมายสำหรับผู้ป่วยนี้"
           >
-            <!-- วันที่นัด -->
             <template v-slot:item.appointment_date="{ item }">
-              {{ item.appointment_date ? formatDate(item.appointment_date) : '-' }}
+              {{ formatDate(item.appointment_date) }}
             </template>
-
-            <!-- เวลานัด -->
             <template v-slot:item.appointment_time="{ item }">
-              {{ item.appointment_time ? item.appointment_time.substring(0,5) + ' น.' : '-' }}
+              {{ item.appointment_time ? item.appointment_time.substring(0, 5) + ' น.' : 'N/A' }}
             </template>
-
-            <!-- สาเหตุ -->
-            <template v-slot:item.reason="{ item }">
-              {{ item.reason || '-' }}
+             <template v-slot:item.status="{ item }">
+                <v-chip :color="getStatusColor(item.status)" dark>{{ item.status }}</v-chip>
             </template>
-
-            <!-- แพทย์ผู้นัด -->
-            <template v-slot:item.appointed_by="{ item }">
-              {{ item.appointed_by || '-' }}
-            </template>
-
-            <!-- สถานที่ติดต่อ -->
-            <template v-slot:item.contact_location="{ item }">
-              {{ item.contact_location || '-' }}
-            </template>
-
-            <!-- อื่นๆ -->
-            <template v-slot:item.other_details="{ item }">
-              {{ item.other_details || '-' }}
-            </template>
-
-            <!-- วินิจฉัยโรค -->
-            <template v-slot:item.diagnosis="{ item }">
-              {{ item.diagnosis || '-' }}
-            </template>
-
-            <!-- สถานะ -->
-            <template v-slot:item.status="{ item }">
-              <v-chip :color="getStatusColor(item.status)" dark>{{ item.status || '-' }}</v-chip>
-            </template>
-
-            <!-- No Results -->
             <template v-slot:no-results>
               <v-alert :value="true" color="warning" icon="mdi-alert">
                 ไม่พบผลลัพธ์สำหรับการค้นหา "{{ search }}"
@@ -150,6 +119,7 @@
 </template>
 
 <script>
+import Swal from 'sweetalert2'
 import axios from 'axios';
 
 const API_PATIENT = import.meta.env.VITE_API_PATIENT;
@@ -184,14 +154,7 @@ export default {
   },
   computed: {
     filteredAppointments() {
-      return Array.isArray(this.allAppointments) ? this.allAppointments.filter(app => {
-        const searchLower = this.search.toLowerCase();
-        return (
-          (app.reason && app.reason.toLowerCase().includes(searchLower)) ||
-          (app.appointed_by && app.appointed_by.toLowerCase().includes(searchLower)) ||
-          (app.status && app.status.toLowerCase().includes(searchLower))
-        );
-      }) : [];
+      return Array.isArray(this.allAppointments) ? this.allAppointments : [];
     }
   },
   watch: {
@@ -219,6 +182,9 @@ export default {
       } catch (error) {
         console.error('โหลดชื่อผู้ป่วยล้มเหลว:', error.response?.data || error.message);
         this.patientName = 'ไม่พบผู้ป่วย';
+        if (error.response?.status === 401) {
+          this.logout();
+        }
       }
     },
     async fetchAllAppointments(patientId) {
@@ -232,6 +198,9 @@ export default {
       } catch (error) {
         console.error('โหลดประวัติการนัดหมายล้มเหลว:', error.response?.data || error.message);
         this.allAppointments = [];
+        if (error.response?.status === 401) {
+          this.logout();
+        }
       } finally {
         this.loadingData = false;
       }
@@ -242,24 +211,25 @@ export default {
       return date.toLocaleDateString('th-TH');
     },
     getStatusColor(status) {
-      switch (status) {
-        case 'มาตามนัด': return 'success';
-        case 'ไม่มาตามนัด': return 'error';
-        case 'ส่งต่อรักษา': return 'warning';
-        case 'รอนัด': return 'info';
-        default: return 'grey';
-      }
+        switch (status) {
+            case 'มาตามนัด': return 'success';
+            case 'ไม่มาตามนัด': return 'error';
+            case 'ส่งต่อรักษา': return 'warning';
+            case 'รอนัด': return 'info';
+            default: return 'grey';
+        }
     },
     goToUserPage() { this.$router.push('/profile'); },
+    logout() { localStorage.removeItem('userToken'); localStorage.removeItem('userData'); this.$router.push('/'); },
     goToAddPatient() { this.$router.push('/Addpatient'); },
     goToPatientInfo() { this.$router.push('/patientinfo'); },
     goToMapPage() { this.$router.push('/Map'); },
-    logout() { localStorage.removeItem('userToken'); localStorage.removeItem('userData'); this.$router.push('/'); },
+  
     exportAppointmentsCSV() {
       const headers = this.headers.map(h => h.text);
       const rows = this.filteredAppointments.map(item => [
         item.appointment_date ? "'" + (new Date(item.appointment_date).toISOString().slice(0, 10)) + "'" : '',
-        item.appointment_time ? item.appointment_time.substring(0, 5) + ' น.' : '-',
+        item.appointment_time ? item.appointment_time.substring(0, 5) + ' น.' : 'N/A',
         item.reason || '-',
         item.appointed_by || '-',
         item.contact_location || '-',
@@ -290,22 +260,61 @@ export default {
   border-radius: 10px;
 }
 
-@media (max-width: 960px) { 
-  .v-toolbar__title { font-size: 1.1rem; }
-  .v-btn { padding: 0 8px; }
-  .v-btn .v-icon { margin-right: 4px; }
-  .v-card { padding: 16px; }
-  .v-data-table { font-size: 0.9rem; }
+@media (max-width: 960px) {
+  .v-toolbar__title {
+    font-size: 1.1rem;
+  }
+  
+  .v-btn {
+    padding: 0 8px;
+  }
+  
+  .v-btn .v-icon {
+    margin-right: 4px;
+  }
+  
+  .v-card {
+    padding: 16px;
+  }
+  
+  .v-data-table {
+    font-size: 0.9rem;
+  }
 }
 
 @media (max-width: 600px) {
-  .v-toolbar__title { font-size: 1rem; }
-  .v-card { padding: 12px; }
-  .v-card-title { font-size: 1.1rem; }
-  .v-card-text { font-size: 0.9rem; }
-  .v-text-field { margin-bottom: 8px; }
-  .v-btn { padding: 0 4px; font-size: 0.8rem; }
-  .v-data-table { font-size: 0.8rem; }
-  .v-chip { font-size: 0.8rem; height: 24px; }
+  .v-toolbar__title {
+    font-size: 1rem;
+  }
+  
+  .v-card {
+    padding: 12px;
+  }
+  
+  .v-card-title {
+    font-size: 1.1rem;
+  }
+  
+  .v-card-text {
+    font-size: 0.9rem;
+  }
+  
+  .v-text-field {
+    margin-bottom: 8px;
+  }
+  
+  .v-btn {
+    padding: 0 4px;
+    font-size: 0.8rem;
+  }
+  
+  .v-data-table {
+    font-size: 0.8rem;
+  }
+  
+  .v-chip {
+    font-size: 0.8rem;
+    height: 24px;
+  }
 }
 </style>
