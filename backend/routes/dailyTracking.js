@@ -101,4 +101,22 @@ router.post('/', async (req, res) => {
   }
 });
 
+// GET daily tracking ข้อมูลทั้งหมดตาม patient_id
+router.get('/patient/:id', async (req, res) => {
+  const patient_id = req.params.id;
+
+  if (!patient_id) return res.status(400).json({ message: 'Patient ID is required' });
+
+  try {
+    const [rows] = await db.query(
+      'SELECT * FROM daily_tracking WHERE patient_id = ? ORDER BY recorded_at DESC',
+      [patient_id]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching daily tracking data:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
 module.exports = router;
