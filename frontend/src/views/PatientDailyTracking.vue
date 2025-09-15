@@ -94,11 +94,9 @@
           </v-card-text>
           <v-card-actions>
             <v-spacer/>
-            <!-- ปุ่มเพิ่มนัดหมาย -->
             <v-btn color="indigo" dark @click="goToAppointments">
               <v-icon left>mdi-calendar-plus</v-icon>เพิ่มการนัดหมาย
             </v-btn>
-            <!-- ปุ่มเพิ่มข้อมูล -->
             <v-btn color="#3B5F6D" dark @click="addTrackingData" :loading="loading" :disabled="!valid">
               <v-icon left>mdi-plus</v-icon>เพิ่มข้อมูล
             </v-btn>
@@ -128,13 +126,13 @@
 <script>
 import axios from 'axios';
 import dayjs from 'dayjs';
-import { ref, onMounted, watch, defineComponent } from 'vue';
+import { ref, defineComponent, onMounted, watch } from 'vue';
 import { Chart, LineController, LineElement, PointElement, LinearScale, CategoryScale, Title, Tooltip, Legend } from 'chart.js';
 import { showSuccessAlert, showErrorAlert } from '../utils/sweetAlert';
 
 Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryScale, Title, Tooltip, Legend);
 
-export default {
+export default defineComponent({
   name: 'PatientDailyTracking',
   components: {
     LineChart: defineComponent({
@@ -142,10 +140,9 @@ export default {
       setup(props){
         const chartRef = ref(null);
         let chartInstance = null;
-
         const renderChart = () => {
           if(chartRef.value && !chartInstance){
-            chartInstance = new Chart(chartRef.value,{
+            chartInstance = new Chart(chartRef.value, {
               type:'line',
               data:props.chartData,
               options:props.chartOptions
@@ -155,10 +152,8 @@ export default {
             chartInstance.update();
           }
         };
-
         onMounted(() => renderChart());
         watch(() => props.chartData, renderChart, { deep:true });
-
         return { chartRef };
       },
       template: `<canvas ref="chartRef" style="width:100%;height:300px"></canvas>`
@@ -212,19 +207,13 @@ export default {
         const token = localStorage.getItem('userToken');
         const headers = token ? {'x-auth-token':token} : {};
         const res = await axios.get(`${import.meta.env.VITE_API_TRACKING}patient/${this.patientId}`, { headers });
-
         let dataArray = [];
         if(Array.isArray(res.data)) dataArray=res.data;
         else if(res.data && Array.isArray(res.data.data)) dataArray=res.data.data;
-        else console.warn('API response ไม่ใช่ Array:', res.data);
-
         this.dailyTrackingData = dataArray.sort((a,b)=>new Date(b.recorded_at)-new Date(a.recorded_at));
         this.updateChart();
-
-      } catch(err){
-        console.error(err);
-        this.dailyTrackingData=[];
-      } finally{ this.loadingData=false; }
+      } catch(err){ console.error(err); this.dailyTrackingData=[]; }
+      finally{ this.loadingData=false; }
     },
     async addTrackingData(){
       const recordedAt = dayjs(`${this.datePicker} ${this.timePicker}`).format('YYYY-MM-DD HH:mm:ss');
@@ -236,7 +225,7 @@ export default {
         await axios.post(import.meta.env.VITE_API_TRACKING, payload, { headers });
         showSuccessAlert('บันทึกข้อมูลสำเร็จ');
         this.resetNewTrackingForm();
-        await this.fetchDailyTrackingData(); // โหลดใหม่จาก DB
+        await this.fetchDailyTrackingData();
       } catch(err){ console.error(err); showErrorAlert('บันทึกข้อมูลล้มเหลว'); }
       finally{ this.loading=false; }
     },
@@ -271,12 +260,10 @@ export default {
     goToAppointments(){
       if(this.patientId){
         this.$router.push({ path: '/appointments', query:{ patientId:this.patientId } });
-      } else {
-        this.$router.push('/appointments');
-      }
+      } else this.$router.push('/appointments');
     }
   }
-};
+});
 </script>
 
 <style scoped>
