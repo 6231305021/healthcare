@@ -109,8 +109,12 @@
         <v-card class="mt-6 pa-5">
           <v-card-title class="text-h6">ประวัติข้อมูลติดตามสุขภาพ</v-card-title>
           <v-data-table :headers="headers" :items="dailyTrackingData" :loading="loadingData" class="elevation-1">
-            <template v-slot:item.blood_pressure="{ item }">{{ item.blood_pressure_systolic }}/{{ item.blood_pressure_diastolic }}</template>
-            <template v-slot:item.recorded_at="{ item }">{{ formatDateTime(item.recorded_at) }}</template>
+            <template v-slot:item.blood_pressure="{ item }">
+              {{ item.blood_pressure_systolic }}/{{ item.blood_pressure_diastolic }}
+            </template>
+            <template v-slot:item.recorded_at="{ item }">
+              {{ formatDateTime(item.recorded_at) }}
+            </template>
             <template v-slot:no-data>ไม่มีข้อมูลติดตามสุขภาพสำหรับผู้ป่วยนี้</template>
           </v-data-table>
         </v-card>
@@ -127,10 +131,10 @@
 
 <script>
 import axios from 'axios';
+import Swal from 'sweetalert2';
 import dayjs from 'dayjs';
 import { ref, onMounted, watch, defineComponent } from 'vue';
 import { Chart, LineController, LineElement, PointElement, LinearScale, CategoryScale, Title, Tooltip, Legend } from 'chart.js';
-import { showSuccessAlert, showErrorAlert } from '../utils/sweetAlert';
 
 Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryScale, Title, Tooltip, Legend);
 
@@ -144,20 +148,24 @@ export default {
         let chartInstance = null;
 
         const renderChart = () => {
-          if(chartRef.value && !chartInstance){
-            chartInstance = new Chart(chartRef.value,{
-              type:'line',
-              data:props.chartData,
-              options:props.chartOptions
+          if (!chartRef.value) return;
+          const ctx = chartRef.value.getContext('2d');
+          if (!chartInstance) {
+            chartInstance = new Chart(ctx, {
+              type: 'line',
+              data: props.chartData,
+              options: props.chartOptions
             });
-          } else if(chartInstance){
+          } else {
             chartInstance.data = props.chartData;
+            chartInstance.options = props.chartOptions;
             chartInstance.update();
           }
         };
 
         onMounted(() => renderChart());
-        watch(() => props.chartData, renderChart, { deep:true });
+        watch(() => props.chartData, () => renderChart(), { deep:true });
+        watch(() => props.chartOptions, () => renderChart(), { deep:true });
 
         return { chartRef };
       },
@@ -181,28 +189,28 @@ export default {
       headers:[
         { text:'วันที่/เวลา', value:'recorded_at' },
         { text:'อุณหภูมิ (°C)', value:'temperature' },
-        { text:'ความดัน (บน/ล่าง)', value:'blood_pressure_systolic' },
+        { text:'ความดัน (บน/ล่าง)', value:'blood_pressure' }, 
         { text:'อัตราชีพจร', value:'pulse_rate' },
         { text:'อัตราการหายใจ', value:'respiratory_rate' },
         { text:'น้ำตาลในเลือด', value:'blood_sugar' },
       ],
-      chartData:{labels:[], datasets:[]},
-      chartOptions:{responsive:true, maintainAspectRatio:false}
+      chartData:{ labels: [], datasets: [] },
+      chartOptions:{ responsive:true, maintainAspectRatio:false }
     };
   },
   mounted(){
     this.patientId = this.$route.query.patientId || null;
     if(this.patientId){
-      this.fetchPatientDetails();
+      this.fetchPatientDetails(this.patientId);
       this.fetchDailyTrackingData();
     } else this.patientName='ไม่พบผู้ป่วย';
   },
   methods:{
-    async fetchPatientDetails(){
+    async fetchPatientDetails(id){
       try{
         const token = localStorage.getItem('userToken');
         const headers = token ? {'x-auth-token':token} : {};
-        const res = await axios.get(`${import.meta.env.VITE_API_PATIENT}${this.patientId}`, { headers });
+        const res = await axios.get(`${import.meta.env.VITE_API_PATIENT}${id}`, { headers });
         this.patientName = res.data.name || res.data.patient?.name || 'ไม่พบชื่อผู้ป่วย';
       } catch(err){ console.error(err); this.patientName='ไม่พบผู้ป่วย'; }
     },
@@ -226,41 +234,43 @@ export default {
       try{
         const token = localStorage.getItem('userToken');
         const headers = token ? {'x-auth-token':token} : {};
-        await axios.post(import.meta.env.VITE_API_TRACKING, payload, { headers });
-        showSuccessAlert('บันทึกข้อมูลสำเร็จ');
+        await axios.post(`${import.meta.env.VITE_API_TRACKING}`, payload, { headers });
+        Swal.fire({ icon:'success', title:'บันทึกสำเร็จ', timer: 1500, showConfirmButton:false });
         this.resetNewTrackingForm();
         await this.fetchDailyTrackingData();
-      } catch(err){ console.error(err); showErrorAlert('บันทึกข้อมูลล้มเหลว'); }
-      finally{ this.loading=false; }
+      } catch(err){ 
+        console.error(err); 
+        Swal.fire({ icon:'error', title:'บันทึกข้อมูลล้มเหลว' });
+      } finally{ this.loading=false; }
     },
     resetNewTrackingForm(){
       this.newTracking={temperature:null, blood_pressure_systolic:null, blood_pressure_diastolic:null, pulse_rate:null, respiratory_rate:null, blood_sugar:null};
       this.datePicker=new Date().toISOString().substr(0,10);
       this.timePicker=new Date().toTimeString().substr(0,5);
-      this.$refs.trackingForm.resetValidation();
+      if(this.$refs.trackingForm && this.$refs.trackingForm.resetValidation) {
+        this.$refs.trackingForm.resetValidation();
+      }
     },
     updateChart(){
       const sorted = [...this.dailyTrackingData].sort((a,b)=>new Date(a.recorded_at)-new Date(b.recorded_at));
       const labels = sorted.map(d=>dayjs(d.recorded_at).format('DD/MM'));
       const datasets=[
-        { label:'อุณหภูมิ', data:sorted.map(d=>d.temperature), borderColor:'red', fill:false },
-        { label:'ความดันบน', data:sorted.map(d=>d.blood_pressure_systolic), borderColor:'blue', fill:false },
-        { label:'ความดันล่าง', data:sorted.map(d=>d.blood_pressure_diastolic), borderColor:'green', fill:false },
-        { label:'น้ำตาล', data:sorted.map(d=>d.blood_sugar), borderColor:'orange', fill:false },
+        { label:'อุณหภูมิ', data:sorted.map(d=>d.temperature ?? null), borderColor:'red', fill:false },
+        { label:'ความดันบน', data:sorted.map(d=>d.blood_pressure_systolic ?? null), borderColor:'blue', fill:false },
+        { label:'ความดันล่าง', data:sorted.map(d=>d.blood_pressure_diastolic ?? null), borderColor:'green', fill:false },
+        { label:'น้ำตาล', data:sorted.map(d=>d.blood_sugar ?? null), borderColor:'orange', fill:false },
       ];
-      if(this.$refs.lineChart && this.$refs.lineChart.chartRef){
-        this.$refs.lineChart.chartData={labels,datasets};
-      }
+      this.chartData = { labels, datasets };
     },
     formatDateTime(dateTimeString){
-      if(!dateTimeString)return'N/A';
+      if(!dateTimeString) return 'N/A';
       const date = new Date(dateTimeString);
       return date.toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false});
     },
     goToUserPage(){ this.$router.push('/profile'); },
-    goToAddPatient(){ this.$router.push('/Addpatient'); },
+    goToAddPatient(){ this.$router.push('/addpatient'); },
     goToPatientInfo(){ this.$router.push('/patientinfo'); },
-    goToMapPage(){ this.$router.push('/Map'); },
+    goToMapPage(){ this.$router.push('/map'); },
     goToAppointments(){
       if(this.patientId){
         this.$router.push({ path: '/appointments', query:{ patientId:this.patientId } });
