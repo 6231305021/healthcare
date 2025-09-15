@@ -290,7 +290,7 @@ export default {
   border-radius: 10px;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 960px) { 
   .v-toolbar__title { font-size: 1.1rem; }
   .v-btn { padding: 0 8px; }
   .v-btn .v-icon { margin-right: 4px; }
