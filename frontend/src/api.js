@@ -1,149 +1,62 @@
-// frontend/src/api.js
+// src/api.js
+import axios from 'axios';
 
-// -------------------- Base URLs from .env --------------------
-const API_AUTH = import.meta.env.VITE_API_URL;
-const API_PATIENT = import.meta.env.VITE_API_PATIENT;
+// Base URLs จากไฟล์ .env
+const API_AUTH = import.meta.env.VITE_API_URL;          // /auth
+const API_PATIENT = import.meta.env.VITE_API_PATIENT;   // /patient
+const API_USER = import.meta.env.VITE_API_USER;         // /user
 const API_APPOINTMENTS = import.meta.env.VITE_API_APPOINTMENTS;
 const API_TRACKING = import.meta.env.VITE_API_TRACKING;
-const API_GEOCODE = import.meta.env.VITE_API_GEOCODE;
-const API_USER = import.meta.env.VITE_API_USER;
 
-// Debug env variables
-console.log("API_AUTH =", import.meta.env.VITE_API_URL);
-console.log("API_AUTH =", API_AUTH);
-console.log("API_PATIENT =", API_PATIENT);
-console.log("API_APPOINTMENTS =", API_APPOINTMENTS);
-console.log("API_TRACKING =", API_TRACKING);
-console.log("API_GEOCODE =", API_GEOCODE);
-console.log("API_USER =", API_USER);
-
-// -------------------- Helper --------------------
-async function handleRequest(url, options = {}) {
-  try {
-    const res = await fetch(url, options);
-    const text = await res.text();
-    let data;
-    try { data = JSON.parse(text); } catch { data = text; }
-    if (!res.ok) throw new Error(data?.message || data?.error || 'API request failed');
-    return data;
-  } catch (err) {
-    console.error('API error:', err.message);
-    throw err;
-  }
+// Header สำหรับ Token (ถ้ามี)
+function getAuthHeader() {
+  const token = localStorage.getItem('token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-// -------------------- Auth --------------------
-export async function registerUser(data) {
-  return handleRequest(`${API_AUTH}/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
+// -------------------- AUTH --------------------
+export async function login({ citizenId, password }) {
+  return axios.post(`${API_AUTH}/login`, { citizenId, password });
+}
+
+export async function registerPatient(data) {
+  return axios.post(`${API_PATIENT}`, data, {
+    headers: { 'Content-Type': 'multipart/form-data' },
   });
 }
 
-export async function loginUser(data) {
-  return handleRequest(`${API_AUTH}/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-}
-
-// -------------------- Patient --------------------
-export async function getAllPatients() {
-  return handleRequest(`${API_PATIENT}`);
+// -------------------- PATIENT --------------------
+export async function getPatients() {
+  return axios.get(`${API_PATIENT}`, { headers: getAuthHeader() });
 }
 
 export async function getPatientById(id) {
-  return handleRequest(`${API_PATIENT}${id}`);
+  return axios.get(`${API_PATIENT}${id}`, { headers: getAuthHeader() });
 }
 
-export async function createPatient(data, imageFile) {
-  const formData = new FormData();
-  for (const key in data) formData.append(key, data[key]);
-  if (imageFile) formData.append('patientImage', imageFile);
-  return handleRequest(`${API_PATIENT}`, { method: 'POST', body: formData });
+// -------------------- USERS --------------------
+export async function getUsers() {
+  return axios.get(`${API_USER}`, { headers: getAuthHeader() });
 }
 
-export async function updatePatient(id, data, imageFile) {
-  const formData = new FormData();
-  for (const key in data) formData.append(key, data[key]);
-  if (imageFile) formData.append('patientImage', imageFile);
-  return handleRequest(`${API_PATIENT}${id}`, { method: 'PUT', body: formData });
+export async function getUserById(id) {
+  return axios.get(`${API_USER}${id}`, { headers: getAuthHeader() });
 }
 
-export async function deletePatient(id) {
-  return handleRequest(`${API_PATIENT}${id}`, { method: 'DELETE' });
-}
-
-// -------------------- Appointments --------------------
-export async function getAppointments(params = {}) {
-  const url = new URL(`${API_APPOINTMENTS}`);
-  Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
-  return handleRequest(url);
+// -------------------- APPOINTMENTS --------------------
+export async function getAppointments() {
+  return axios.get(`${API_APPOINTMENTS}`, { headers: getAuthHeader() });
 }
 
 export async function createAppointment(data) {
-  return handleRequest(`${API_APPOINTMENTS}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
+  return axios.post(`${API_APPOINTMENTS}`, data, { headers: getAuthHeader() });
 }
 
-export async function updateAppointment(id, data) {
-  return handleRequest(`${API_APPOINTMENTS}${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
+// -------------------- DAILY TRACKING --------------------
+export async function getDailyTracking() {
+  return axios.get(`${API_TRACKING}`, { headers: getAuthHeader() });
 }
 
-export async function deleteAppointment(id) {
-  return handleRequest(`${API_APPOINTMENTS}${id}`, { method: 'DELETE' });
-}
-
-// -------------------- Daily Tracking --------------------
-export async function addDailyTracking(data) {
-  return handleRequest(`${API_TRACKING}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-}
-
-// -------------------- Geocode --------------------
-export async function geocodeAddress(address) {
-  return handleRequest(`${API_GEOCODE}/geocode`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ address }),
-  });
-}
-
-// -------------------- User --------------------
-export async function getUserById(id) {
-  return handleRequest(`${API_USER}${id}`);
-}
-
-export async function updateUser(id, data) {
-  return handleRequest(`${API_USER}${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-}
-
-export async function updateUserCoordinates(id, latitude, longitude) {
-  return handleRequest(`${API_USER}${id}/coordinates`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ latitude, longitude }),
-  });
-}
-
-export async function getAllUsers(params = {}) {
-  const url = new URL(`${API_USER}`);
-  Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
-  return handleRequest(url);
+export async function createDailyTracking(data) {
+  return axios.post(`${API_TRACKING}`, data, { headers: getAuthHeader() });
 }

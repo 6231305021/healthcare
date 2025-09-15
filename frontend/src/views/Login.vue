@@ -86,9 +86,8 @@
 </template>
 
 <script>
-import Swal from 'sweetalert2';
-import axios from 'axios';
-import { showSuccessAlert, showErrorAlert, showWarningAlert } from '../utils/sweetAlert';
+import { login } from '../api.js';
+import { showSuccessAlert, showErrorAlert } from '../utils/sweetAlert';
 
 export default {
   data() {
@@ -115,12 +114,13 @@ export default {
 
       this.loading = true;
       try {
-        const res = await axios.post(`${import.meta.env.VITE_API_BASE}/auth/login`, {
+        // เรียกฟังก์ชัน login ที่ import มา
+        const res = await login({
           citizenId: this.citizenId,
           password: this.password,
         });
 
-        if (res.data?.token) {
+        if (res?.data?.token) {
           localStorage.setItem('token', res.data.token);
 
           const user = res.data.user;
@@ -139,7 +139,7 @@ export default {
             showErrorAlert('เข้าสู่ระบบล้มเหลว: ไม่พบข้อมูลผู้ใช้');
           }
         } else {
-          showErrorAlert(res.data?.message || 'เข้าสู่ระบบล้มเหลว: ไม่ได้รับ Token');
+          showErrorAlert(res?.data?.message || 'เข้าสู่ระบบล้มเหลว: ไม่ได้รับ Token');
         }
       } catch (error) {
         console.error('Login error:', error.response?.data || error.message);
@@ -157,8 +157,8 @@ export default {
 };
 </script>
 
+
 <style scoped>
-/* background, layout และ responsive เหมือนเดิม */
 .background-image {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   width: 100%; height: 100%;
@@ -173,5 +173,4 @@ export default {
 .login-card { background-color:#F8F8F4; border-radius:20px; border:3px solid #8EC3B0; padding:30px; width:100%; max-width:400px; margin:0 auto; }
 .login-button { background-color:#92D7D0 !important; color:white !important; border-radius:10px; height:50px; font-size:1.2em; font-weight:bold; }
 .create-account-button { color:#000 !important; text-decoration:underline; font-size:1.1em; text-transform:none !important; padding:0; min-width:unset; }
-/* media queries ตามเดิม */
 </style>

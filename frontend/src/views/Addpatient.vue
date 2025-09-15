@@ -193,7 +193,7 @@
                   <v-row dense>
                     <v-col cols="12">
                       <v-file-input
-                        v-model="patientImage"
+                        v-model="patientImageArray"
                         accept="image/*"
                         label="อัพโหลดรูปภาพผู้ป่วย"
                         prepend-icon="mdi-camera"
@@ -367,7 +367,6 @@ import 'leaflet/dist/leaflet.css';
 import axios from 'axios';
 import { showSuccessAlert, showErrorAlert, showWarningAlert } from '../utils/sweetAlert';
 
-// 🔹 ใช้ environment variable
 const API_PATIENT = import.meta.env.VITE_API_PATIENT;
 
 export default {
@@ -393,7 +392,7 @@ export default {
       map: null,
       marker: null,
       genderOptions: ['ชาย', 'หญิง', 'อื่นๆ'],
-      patientImage: null,
+      patientImageArray: [], // <-- ใช้ array สำหรับ VFileInput Vuetify 3
       imagePreview: null,
       snackbar: {
         show: false,
@@ -466,11 +465,12 @@ export default {
       }
     },
 
-    previewImage(file) {
-      if (!file) {
+    previewImage(files) {
+      if (!files || !files.length) {
         this.imagePreview = null;
         return;
       }
+      const file = files[0];
       const reader = new FileReader();
       reader.onload = e => {
         this.imagePreview = e.target.result;
@@ -502,11 +502,10 @@ export default {
         formData.append('latitude', this.latitude);
         formData.append('longitude', this.longitude);
         
-        if (this.patientImage) {
-          formData.append('patientImage', this.patientImage);
+        if (this.patientImageArray.length) {
+          formData.append('patientImage', this.patientImageArray[0]);
         }
 
-        // 🔹 เรียก API จาก environment variable
         const res = await axios.post(`${API_PATIENT}`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data'

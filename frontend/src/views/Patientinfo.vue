@@ -1,6 +1,79 @@
 <template>
   <v-app>
-    <!-- ... (template เหมือนเดิม ไม่ต้องแก้ไข) ... -->
+    <v-main>
+      <v-container fluid>
+        <!-- ช่องค้นหา -->
+        <v-text-field
+          v-model="search"
+          label="ค้นหาผู้ป่วย"
+          prepend-inner-icon="mdi-magnify"
+          clearable
+          class="my-4"
+        ></v-text-field>
+
+        <!-- Loading skeleton -->
+        <v-skeleton-loader
+          v-if="loading"
+          type="image"
+          class="my-4"
+          max-width="150"
+        ></v-skeleton-loader>
+
+        <!-- Error message -->
+        <v-alert v-if="error" type="error" class="my-4">
+          {{ error }}
+        </v-alert>
+
+        <!-- Grid ผู้ป่วย -->
+        <v-row v-if="!loading && filteredPatients.length" dense>
+          <v-col
+            v-for="patient in filteredPatients"
+            :key="patient.id"
+            cols="12"
+            sm="6"
+            md="4"
+            lg="3"
+          >
+            <v-card class="pa-2" outlined>
+              <v-img
+                :src="patient.avatar || defaultImage"
+                alt="Patient Image"
+                height="120"
+                contain
+              ></v-img>
+
+              <v-card-title class="text-h6">
+                {{ patient.name }}
+              </v-card-title>
+
+              <v-card-subtitle class="text-body2">
+                {{ formatAddress(patient) }}
+              </v-card-subtitle>
+
+              <v-card-actions>
+                <v-btn icon @click="editPatient(patient.id)">
+                  <v-icon>mdi-pencil</v-icon>
+                </v-btn>
+                <v-btn icon @click="deletePatient(patient.id)">
+                  <v-icon color="red">mdi-delete</v-icon>
+                </v-btn>
+                <v-btn icon @click="viewOnMap(patient)">
+                  <v-icon color="green">mdi-map-marker</v-icon>
+                </v-btn>
+                <v-btn icon @click="goToDailyTracking(patient.id)">
+                  <v-icon color="blue">mdi-calendar-check</v-icon>
+                </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-col>
+        </v-row>
+
+        <!-- ข้อความเมื่อไม่พบข้อมูล -->
+        <v-alert v-else-if="!loading && !filteredPatients.length" type="info" class="my-4">
+          ไม่พบข้อมูลผู้ป่วย
+        </v-alert>
+      </v-container>
+    </v-main>
   </v-app>
 </template>
 
@@ -41,6 +114,7 @@ export default {
     },
     async fetchPatients() {
       try {
+        this.loading = true;
         const token = localStorage.getItem('userToken');
         const headers = token ? { 'x-auth-token': token } : {};
         const response = await axios.get(`${import.meta.env.VITE_API_PATIENT}`, { headers });
@@ -54,24 +128,16 @@ export default {
         console.error('โหลดข้อมูลล้มเหลว', error);
         this.patients = [];
         showErrorAlert('ไม่สามารถโหลดข้อมูลผู้ป่วยได้');
+      } finally {
+        this.loading = false;
       }
     },
     async editPatient(id) {
-      const result = await showConfirmDialog(
-        'ยืนยันการแก้ไข',
-        'คุณต้องการแก้ไขข้อมูลผู้ป่วยนี้ใช่หรือไม่?'
-      );
-      
-      if (result.isConfirmed) {
-        this.$router.push(`/editpatient/${id}`);
-      }
+      const result = await showConfirmDialog('ยืนยันการแก้ไข', 'คุณต้องการแก้ไขข้อมูลผู้ป่วยนี้ใช่หรือไม่?');
+      if (result.isConfirmed) this.$router.push(`/editpatient/${id}`);
     },
     async viewOnMap(patient) {
-      const result = await showConfirmDialog(
-        'ยืนยันการดูแผนที่',
-        'คุณต้องการดูตำแหน่งที่อยู่ของผู้ป่วยบนแผนที่ใช่หรือไม่?'
-      );
-      
+      const result = await showConfirmDialog('ยืนยันการดูแผนที่', 'คุณต้องการดูตำแหน่งที่อยู่ของผู้ป่วยบนแผนที่ใช่หรือไม่?');
       if (result.isConfirmed) {
         const lat = patient.latitude || 0;
         const lng = patient.longitude || 0;
@@ -81,42 +147,11 @@ export default {
     },
     async goToDailyTracking(id) {
       const result = await showConfirmDialog(
-        'ยืนยันการดูข้อมูลติดตาม',
-        'คุณต้องการดูข้อมูลการติดตามสุขภาพของผู้ป่วยใช่หรือไม่?'
+        'ยืนยันการบันทึกรายวัน',
+        'คุณต้องการบันทึกข้อมูลรายวันของผู้ป่วยนี้ใช่หรือไม่?'
       );
-      
       if (result.isConfirmed) {
         this.$router.push(`/daily-tracking?patientId=${id}`);
-      }
-    },
-    async goToAppointments(id) {
-      const result = await showConfirmDialog(
-        'ยืนยันการดูการนัดหมาย',
-        'คุณต้องการดูข้อมูลการนัดหมายของผู้ป่วยใช่หรือไม่?'
-      );
-      
-      if (result.isConfirmed) {
-        this.$router.push(`/appointments?patientId=${id}`);
-      }
-    },
-    async goToAppointmentHistory(id) {
-      const result = await showConfirmDialog(
-        'ยืนยันการดูประวัติ',
-        'คุณต้องการดูประวัติการนัดหมายของผู้ป่วยใช่หรือไม่?'
-      );
-      
-      if (result.isConfirmed) {
-        this.$router.push(`/appointment-history?patientId=${id}`);
-      }
-    },
-    async goToDailyTrackingGraph(id) {
-      const result = await showConfirmDialog(
-        'ยืนยันการดูกราฟ',
-        'คุณต้องการดูกราฟข้อมูลการติดตามสุขภาพของผู้ป่วยใช่หรือไม่?'
-      );
-      
-      if (result.isConfirmed) {
-        this.$router.push(`/daily-tracking-graph?patientId=${id}`);
       }
     },
     async deletePatient(id) {
@@ -124,14 +159,13 @@ export default {
         'ยืนยันการลบผู้ป่วย',
         'คุณต้องการลบข้อมูลผู้ป่วยนี้ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้'
       );
-      
       if (result.isConfirmed) {
         try {
           const token = localStorage.getItem('userToken');
           const headers = token ? { 'x-auth-token': token } : {};
           await axios.delete(`${import.meta.env.VITE_API_PATIENT}${id}`, { headers });
           showSuccessAlert('ลบข้อมูลผู้ป่วยสำเร็จ');
-          this.fetchPatients(); // Refresh the patient list
+          this.fetchPatients();
         } catch (error) {
           console.error('ลบข้อมูลผู้ป่วยล้มเหลว:', error);
           showErrorAlert('ไม่สามารถลบข้อมูลผู้ป่วยได้: ' + (error.response?.data?.message || error.message));
@@ -149,9 +183,7 @@ export default {
         confirmButtonColor: '#3085d6',
         cancelButtonColor: '#d33',
       }).then((result) => {
-        if (result.isConfirmed) {
-          this.$router.push('/')
-        }
+        if (result.isConfirmed) this.$router.push('/')
       })
     },
     goToUserPage() { this.$router.push('/profile'); },
@@ -165,5 +197,8 @@ export default {
 </script>
 
 <style scoped>
-/* ... (style เดิมทั้งหมด ไม่ต้องแก้ไข) ... */
+/* ลดขนาดรูปเล็กลงให้สมดุลกับ card */
+.v-img {
+  border-radius: 8px;
+}
 </style>
