@@ -1,4 +1,3 @@
-// backend/routes/appointments.js
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
@@ -23,6 +22,23 @@ router.get('/', async (req, res) => {
   } catch (err) {
     console.error('Error fetching appointments:', err);
     res.status(500).json({ message: 'เกิดข้อผิดพลาดในการดึงประวัติการนัดหมาย' });
+  }
+});
+
+// -------------------- Get appointments by patient ID --------------------
+router.get('/patient/:id', async (req, res) => {
+  const { id } = req.params; // patient_id
+  try {
+    const [appointments] = await db.query(
+      `SELECT * FROM appointments
+       WHERE patient_id = ?
+       ORDER BY appointment_date DESC, appointment_time DESC`,
+      [id]
+    );
+    res.json(appointments);
+  } catch (err) {
+    console.error('Error fetching appointments by patient:', err);
+    res.status(500).json({ message: 'เกิดข้อผิดพลาดในการดึงประวัติการนัดหมายของผู้ป่วย' });
   }
 });
 
