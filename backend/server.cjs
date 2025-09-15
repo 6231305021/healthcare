@@ -16,21 +16,21 @@ const db = mysql.createConnection({
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 3306,
+  port: parseInt(process.env.DB_PORT) || 3306, // MySQL port
 });
 
 db.connect((err) => {
-  if (err) console.error("❌ MySQL connection error:", err);
+  if (err) console.error("❌ MySQL Connection Failed:", err);
   else console.log("✅ Connected to MySQL!");
 });
 
 // -------------------- Routes --------------------
 const authRoutes = require("./routes/auth");
-const geocodeRoutes = require('./routes/geocode');
-const dailyTrackingRoutes = require('./routes/dailyTracking');
-const appointmentsRoutes = require('./routes/appointments');
-const patientRoutes = require('./routes/patient');
-const userRoutes = require('./routes/user');
+const geocodeRoutes = require("./routes/geocode");
+const dailyTrackingRoutes = require("./routes/dailyTracking");
+const appointmentsRoutes = require("./routes/appointments");
+const patientRoutes = require("./routes/patient");
+const userRoutes = require("./routes/user");
 
 app.use("/auth", authRoutes);
 app.use("/geocode", geocodeRoutes);
@@ -48,17 +48,16 @@ app.get("/api", (req, res) => {
 });
 
 // -------------------- Serve Frontend --------------------
-const distPath = path.join(__dirname, "dist"); // ⚡ backend root/dist
+const distPath = path.join(__dirname, "dist");
 console.log("📂 Serving frontend from:", distPath);
 
 app.use(express.static(distPath));
-
 app.get("*", (req, res) => {
   res.sendFile(path.join(distPath, "index.html"));
 });
 
 // -------------------- Start Server --------------------
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () =>
-  console.log(`🚀 Server running on port ${PORT}`)
+  console.log(`🚀 Server running on port ${PORT} (${process.env.NODE_ENV})`)
 );
