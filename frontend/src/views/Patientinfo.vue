@@ -187,7 +187,7 @@ export default {
       }
     },
     goToAddAppointment(patientId) {
-      this.$router.push({ name: 'addAppointment', params: { patientId: patientId } });
+      this.$router.push({ name: 'AddAppointment', params: { patientId: patientId } });
     },
     async deletePatient(id) {
       const result = await showDeleteConfirm(
@@ -235,18 +235,5 @@ export default {
 /* ลดขนาดรูปเล็กลงให้สมดุลกับ card */
 .v-img {
   border-radius: 8px;
-}
-
-.background-image {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-image: url('/backgroundvue.png');
-  background-size: cover;
-  background-position: center center;
-  filter: blur(6px);
-  z-index: -1;
 }
 </style>

@@ -213,7 +213,6 @@ export default {
       
       this.allUsers.forEach(user => {
         if(user.latitude && user.longitude){
-          // กำหนด icon ให้แตกต่างกันระหว่าง user ทั่วไปกับ patient
           const iconUrl = user.isPatient && user.image_path ? `${apiBaseUrl}/${user.image_path}` : 'https://cdn-icons-png.flaticon.com/512/3237/3237497.png';
           const icon = L.icon({ 
             iconUrl: iconUrl, 
@@ -265,23 +264,26 @@ export default {
 </script>
 
 <style scoped>
-.background-image { position: fixed; top:0; left:0; width:100vw; height:100vh; background-image:url('/backgroundvue.png'); background-size:cover; background-position:center center; filter:blur(6px); }
-/* Change this line */
-.map-container { position:relative; z-index:1; padding:24px; }
-.map-card { background-color:white; border-radius:15px; box-shadow:0 4px 6px rgba(0,0,0,0.1); }
-/* Change this line */
-.map-content { width:100%; height:100%; border-radius:12px; border:2px solid #92D7D0; overflow:hidden; }
+.background-image { position: fixed; top:0; left:0; width:100vw; height:100vh; background-image:url('/backgroundvue.png'); background-size:cover; background-position:center center; filter:blur(6px); z-index: -1; }
+.map-container { position:relative; z-index:1; padding:24px; display: flex; flex-direction: column; height: 100%; }
+.map-card { 
+  background-color:white; 
+  border-radius:15px; 
+  box-shadow:0 4px 6px rgba(0,0,0,0.1), 0 10px 20px rgba(0,0,0,0.15); 
+  height: 100%; 
+  display: flex; 
+  flex-direction: column; 
+}
+.map-content { width:100%; flex-grow: 1; border-radius:12px; border:2px solid #92D7D0; overflow:hidden; }
 .search-field { background:rgba(255,255,255,0.9); border-radius:8px; }
 .search-btn { margin-left:8px; height:40px !important; }
-.coordinate-card { background:rgba(255,255,255,0.9)!important; border-radius:12px!important; margin-top:16px; }
+.coordinate-card { background:rgba(255,255,255,0.9)!important; border-radius:12px!important; margin-top:16px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
 @media(max-width:768px){
   .map-content {
-    /* Use flexible height for mobile devices as well */
     height: 100%;
   }
 }
-/* เพิ่ม CSS สำหรับรูปภาพใน Pop-up */
 .popup-content img.popup-image {
   max-width: 100px;
   max-height: 100px;
@@ -289,5 +291,33 @@ export default {
   margin: 0 auto 10px;
   border-radius: 50%;
   border: 2px solid #3B5F6D;
+}
+
+/* เพิ่มสไตล์สำหรับข้อมูลใน Pop-up */
+.popup-content h3 {
+  color: #3B5F6D;
+  text-align: center;
+  margin-bottom: 10px;
+}
+.popup-content p {
+  margin: 5px 0;
+}
+.info-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.info-label {
+  font-weight: bold;
+  color: #3B5F6D;
+  margin-right: 8px;
+  min-width: 120px;
+}
+
+.info-value {
+  flex: 1;
+  color: #555;
 }
 </style>
