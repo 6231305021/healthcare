@@ -11,20 +11,27 @@
     "build": "if exist /C/Windows (npm run build:win) else (npm run build:linux)"
   },
   "dependencies": {
+    "@mdi/font": "^7.4.47",
     "axios": "^1.11.0",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.2",
     "body-parser": "^2.2.0",
+    "chart.js": "^4.5.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
     "helmet": "^8.1.0",
+    "html2canvas": "^1.4.1",
     "jsonwebtoken": "^9.0.2",
+    "jspdf": "^3.0.2",
     "leaflet": "^1.9.4",
+    "material-design-icons-iconfont": "^6.7.0",
     "multer": "^1.4.5-lts.1",
     "mysql2": "^3.14.5",
-    "nodemon": "^3.1.10"
+    "nodemon": "^3.1.10",
+    "sweetalert2": "^11.23.0",
+    "vuetify": "^3.10.1"
   }
 }

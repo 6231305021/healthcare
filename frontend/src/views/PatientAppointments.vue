@@ -348,10 +348,14 @@ export default {
         const headers = token ? { 'x-auth-token': token } : {};
         const response = await axios.get(`${API_APPOINTMENTS}patient/${id}`, { headers });
 
-        // ✅ แก้ไข: ตรวจสอบให้เป็น array เสมอ
-        this.appointmentHistory = Array.isArray(response.data)
-          ? response.data
-          : (response.data.appointments || []);
+        // ✅ แก้ไขตรงนี้: ตรวจสอบให้ appointmentHistory เป็น array เสมอ
+        if (Array.isArray(response.data)) {
+          this.appointmentHistory = response.data;
+        } else if (Array.isArray(response.data.appointments)) {
+          this.appointmentHistory = response.data.appointments;
+        } else {
+          this.appointmentHistory = [];
+        }
 
         this.$nextTick(() => this.updateChart());
       } catch (error) {

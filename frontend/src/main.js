@@ -1,6 +1,10 @@
 import { createApp } from 'vue';
 import App from './App.vue';
 import 'leaflet/dist/leaflet.css';
+import Chart from 'chart.js/auto';
+import Swal from 'sweetalert2';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 import 'vuetify/styles';
 import '@mdi/font/css/materialdesignicons.css';
