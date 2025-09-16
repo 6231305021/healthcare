@@ -9,52 +9,36 @@
 
     <v-main>
       <v-container class="mt-6">
-        <v-row>
-          <!-- Chart Section -->
-          <v-col cols="12" md="4">
-            <v-card class="pa-5 mb-6">
-              <v-card-title class="text-h6">สถิติการนัดหมาย</v-card-title>
-              <v-card-text>
-                <canvas id="appointmentChart"></canvas>
-              </v-card-text>
-            </v-card>
-          </v-col>
+        <v-card class="pa-5">
+          <v-card-title class="text-h6 d-flex justify-space-between align-center">
+            <span>ประวัติการนัดหมายทั้งหมด</span>
+          </v-card-title>
 
-          <!-- Appointment Table Section -->
-          <v-col cols="12" md="8">
-            <v-card>
-              <v-card-title class="text-h6 d-flex justify-space-between align-center">
-                <span>รายการนัดหมายทั้งหมด</span>
-              </v-card-title>
-              <v-data-table
-                :headers="headers"
-                :items="appointmentHistory"
-                :loading="loadingData"
-                item-key="id"
-                class="elevation-1"
-              >
-                <template v-slot:item.appointment_datetime="{ item }">
-                  {{ formatDateTime(item.appointment_date, item.appointment_time) }}
-                </template>
-                <template v-slot:item.hn_number="{ item }">
-                  {{ item.hn_number || '-' }}
-                </template>
-                <template v-slot:item.rights="{ item }">
-                  {{ item.rights || '-' }}
-                </template>
-                <template v-slot:item.status="{ item }">
-                  <v-chip :color="getStatusColor(item.status)" dark>{{ item.status }}</v-chip>
-                </template>
-                <template v-slot:item.actions="{ item }">
-                  <v-icon small @click="deleteAppointment(item.id)">mdi-delete</v-icon>
-                </template>
-                <template v-slot:no-data>
-                  ไม่มีข้อมูลการนัดหมาย
-                </template>
-              </v-data-table>
-            </v-card>
-          </v-col>
-        </v-row>
+          <v-data-table
+            :headers="headers"
+            :items="appointmentHistory"
+            :loading="loading"
+            class="elevation-1"
+            item-key="id"
+          >
+            <template v-slot:item.appointment_datetime="{ item }">
+              {{ formatDateTime(item.appointment_date, item.appointment_time) }}
+            </template>
+            <template v-slot:item.status="{ item }">
+              <v-chip :color="getStatusColor(item.status)" dark>{{ item.status }}</v-chip>
+            </template>
+            <template v-slot:no-data>
+              ไม่มีข้อมูลการนัดหมาย
+            </template>
+          </v-data-table>
+
+          <v-card class="mt-6 pa-5" v-if="appointmentHistory.length">
+            <v-card-title class="text-h6">สถิติสถานะการนัดหมาย</v-card-title>
+            <v-card-text>
+              <canvas id="appointmentChart"></canvas>
+            </v-card-text>
+          </v-card>
+        </v-card>
       </v-container>
     </v-main>
   </v-app>
@@ -62,7 +46,6 @@
 
 <script>
 import axios from 'axios';
-import Swal from 'sweetalert2';
 import Chart from 'chart.js/auto';
 
 const API_APPOINTMENTS = import.meta.env.VITE_API_APPOINTMENTS;
@@ -72,7 +55,7 @@ export default {
   data() {
     return {
       appointmentHistory: [],
-      loadingData: false,
+      loading: false,
       headers: [
         { text: 'วันที่/เวลา', value: 'appointment_datetime' },
         { text: 'HN', value: 'hn_number' },
@@ -83,16 +66,15 @@ export default {
         { text: 'วินิจฉัย', value: 'diagnosis' },
         { text: 'รายละเอียดอื่นๆ', value: 'other_details' },
         { text: 'สถานะ', value: 'status' },
-        { text: 'Actions', value: 'actions', sortable: false },
       ],
-      statusColors: {
-        'มาตามนัด':'#4CAF50',
-        'ไม่มาตามนัด':'#F44336',
-        'ส่งต่อรักษา':'#2196F3',
-        'รอนัด':'#FF9800'
+      chartInstance: null,
+      statusOptions: ['มาตามนัด', 'ไม่มาตามนัด', 'ส่งต่อรักษา', 'รอนัด'],
+      chartColors: {
+        'มาตามนัด': '#4CAF50',
+        'ไม่มาตามนัด': '#F44336',
+        'ส่งต่อรักษา': '#2196F3',
+        'รอนัด': '#FF9800',
       },
-      statusOptions: ['มาตามนัด','ไม่มาตามนัด','ส่งต่อรักษา','รอนัด'],
-      chartInstance: null
     };
   },
   mounted() {
@@ -100,56 +82,44 @@ export default {
   },
   methods: {
     async fetchAppointments() {
-      this.loadingData = true;
+      this.loading = true;
       try {
-        const res = await axios.get(API_APPOINTMENTS);
-        this.appointmentHistory = res.data;
+        const token = localStorage.getItem('userToken');
+        const headers = token ? { 'x-auth-token': token } : {};
+        const response = await axios.get(`${API_APPOINTMENTS}all`, { headers });
+
+        // ✅ ทำให้เป็น array เสมอ
+        this.appointmentHistory = Array.isArray(response.data)
+          ? response.data
+          : (response.data.appointments || []);
+
         this.$nextTick(() => this.updateChart());
-      } catch (err) {
-        console.error(err);
+      } catch (error) {
+        console.error('Failed to load appointment history:', error.response?.data || error.message);
         this.appointmentHistory = [];
-        Swal.fire('ผิดพลาด','ไม่สามารถโหลดข้อมูลการนัดหมายได้','error');
-        if(this.chartInstance) this.chartInstance.destroy();
+        if (this.chartInstance) this.chartInstance.destroy();
       } finally {
-        this.loadingData = false;
+        this.loading = false;
       }
     },
-    async deleteAppointment(id) {
-      const result = await Swal.fire({ 
-        title:'ยืนยัน', 
-        text:'ต้องการลบใช่หรือไม่?', 
-        icon:'warning', 
-        showCancelButton:true, 
-        confirmButtonText:'ใช่', 
-        cancelButtonText:'ยกเลิก' 
-      });
-      if(result.isConfirmed){
-        try {
-          await axios.delete(`${API_APPOINTMENTS}${id}`);
-          Swal.fire('สำเร็จ','ลบเรียบร้อย','success');
-          this.fetchAppointments();
-        } catch (err) {
-          console.error(err);
-          Swal.fire('ผิดพลาด','ไม่สามารถลบได้','error');
-        }
-      }
-    },
-    formatDateTime(date,time){
-      if(!date) return '-';
-      const d = new Date(`${date}T${time||'00:00'}`);
+
+    formatDateTime(date, time) {
+      if (!date) return '-';
+      const d = new Date(`${date}T${time || '00:00'}`);
       return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
     },
-    getStatusColor(status){ return this.statusColors[status] || '#000'; },
+
+    getStatusColor(status) {
+      return this.chartColors[status] || '#000000';
+    },
 
     updateChart() {
-      if (!this.appointmentHistory.length) {
-        if(this.chartInstance) this.chartInstance.destroy();
-        return;
-      }
+      if (!this.appointmentHistory.length) return;
+
       const counts = {};
       this.statusOptions.forEach(s => counts[s] = 0);
       this.appointmentHistory.forEach(a => {
-        if(counts[a.status] !== undefined) counts[a.status]++;
+        if (counts[a.status] !== undefined) counts[a.status]++;
       });
 
       const data = {
@@ -157,11 +127,11 @@ export default {
         datasets: [{
           label: 'สถานะการนัดหมาย',
           data: this.statusOptions.map(s => counts[s]),
-          backgroundColor: this.statusOptions.map(s => this.statusColors[s])
+          backgroundColor: this.statusOptions.map(s => this.chartColors[s])
         }]
       };
 
-      if(this.chartInstance) this.chartInstance.destroy();
+      if (this.chartInstance) this.chartInstance.destroy();
       const ctx = document.getElementById('appointmentChart').getContext('2d');
       this.chartInstance = new Chart(ctx, { type: 'bar', data });
     }
