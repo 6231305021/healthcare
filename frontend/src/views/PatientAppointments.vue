@@ -209,12 +209,63 @@
             <v-card-actions>
               <v-spacer />
               <v-btn text @click="exportDialog = false">ยกเลิก</v-btn>
-              <v-btn color="#3B5F6D" dark @click="exportAppointmentPDF" :disabled="!selectedAppointmentId">
-                <v-icon left>mdi-printer</v-icon> ส่งออก
+              <v-btn color="#3B5F6D" dark @click="showPrintPreview" :disabled="!selectedAppointmentId">
+                <v-icon left>mdi-printer</v-icon> ดูตัวอย่างและพิมพ์
               </v-btn>
             </v-card-actions>
           </v-card>
         </v-dialog>
+
+        <v-dialog v-model="printDialog" fullscreen hide-overlay transition="dialog-bottom-transition">
+          <v-card>
+            <v-toolbar dense dark color="#3B5F6D" class="no-print">
+              <v-btn icon dark @click="printDialog = false">
+                <v-icon>mdi-close</v-icon>
+              </v-btn>
+              <v-toolbar-title>ตัวอย่างใบนัด</v-toolbar-title>
+              <v-spacer></v-spacer>
+              <v-btn color="white" dark class="mr-2 black--text" @click="printAppointment">
+                <v-icon left>mdi-printer</v-icon> พิมพ์ใบนัด
+              </v-btn>
+            </v-toolbar>
+
+            <v-card-text class="pa-10">
+              <div id="print-content" class="pa-5">
+                <h1 class="text-h5 text-center mb-6">ใบนัดผู้ป่วย</h1>
+                <v-row no-gutters>
+                  <v-col cols="12" class="mb-2">
+                    <strong>HN:</strong> {{ selectedAppointmentDetails.hn_number || 'ไม่ได้ระบุ' }}
+                  </v-col>
+                  <v-col cols="12" class="mb-2">
+                    <strong>ชื่อผู้ป่วย:</strong> {{ patientName }}
+                  </v-col>
+                  <v-col cols="12" class="mb-2">
+                    <strong>วันที่/เวลานัดหมาย:</strong> {{ formatDateTime(selectedAppointmentDetails.appointment_date, selectedAppointmentDetails.appointment_time) }}
+                  </v-col>
+                  <v-col cols="12" class="mb-2">
+                    <strong>แพทย์/ผู้บันทึก:</strong> {{ selectedAppointmentDetails.appointed_by || 'ไม่ได้ระบุ' }}
+                  </v-col>
+                  <v-col cols="12" class="mb-2">
+                    <strong>สถานที่ติดต่อ:</strong> {{ selectedAppointmentDetails.contact_location || 'ไม่ได้ระบุ' }}
+                  </v-col>
+                  <v-col cols="12" class="mb-2">
+                    <strong>วินิจฉัย:</strong> {{ selectedAppointmentDetails.diagnosis || 'ไม่ได้ระบุ' }}
+                  </v-col>
+                  <v-col cols="12" class="mb-2">
+                    <strong>เหตุผล:</strong> {{ selectedAppointmentDetails.reason || 'ไม่ได้ระบุ' }}
+                  </v-col>
+                  <v-col cols="12" class="mb-2">
+                    <strong>รายละเอียดอื่นๆ:</strong> {{ selectedAppointmentDetails.other_details || 'ไม่ได้ระบุ' }}
+                  </v-col>
+                  <v-col cols="12" class="mb-2">
+                    <strong>สถานะ:</strong> {{ selectedAppointmentDetails.status || 'ไม่ได้ระบุ' }}
+                  </v-col>
+                </v-row>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-dialog>
+
       </v-container>
     </v-main>
   </v-app>
@@ -223,15 +274,11 @@
 <script>
 import Swal from 'sweetalert2';
 import Chart from 'chart.js/auto';
-import jsPDF from 'jspdf';
 import { getPatientById, getAppointmentsByPatientId, createAppointment as createAppointmentApi, deleteAppointment as deleteAppointmentApi } from '@/api.js';
-
-// ข้อมูลฟอนต์ THSarabunNew (Base64) - ใช้แค่บางส่วนตามที่คุณให้มา
-const THSarabunNewBase64 = `AAUWBwACAABNYWMgT1MgWCAgICAgICAgAAIAAAAJAAAAMgAAAKAAAAACAAAA0gAAAABzZm50AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQVRUUgAAAAAAAADSAAAAqAAAACoAAAAAAAAAAAAAAAAAAAABAAAAqAAAACoAACRjb20uYXBwbGUubWV0YWRhdGE6X2tNREl0ZW1Vc2VyVGFncwAAYnBsaXN0MDCgCAAAAAAAAAEBAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAJ`;
 
 export default {
   name: 'PatientAppointments',
-  props: ['patientId'], // รับ patientId จาก router params
+  props: ['patientId'],
   data() {
     return {
       drawer: false,
@@ -245,7 +292,7 @@ export default {
         contact_location: null,
         other_details: null,
         diagnosis: null,
-        status: 'นัดหมาย',
+        status: 'รอนัด', // กำหนดค่าเริ่มต้นเป็น 'รอนัด'
       },
       datePicker: new Date().toISOString().substr(0, 10),
       timePicker: new Date().toTimeString().substr(0, 5),
@@ -273,15 +320,11 @@ export default {
         'ส่งต่อรักษา': '#2196F3',
         'รอนัด': '#FF9800',
       },
-      exportDialog: false,
+      exportDialog: false, // Dialog สำหรับเลือกนัดหมาย
+      printDialog: false, // Dialog สำหรับแสดงตัวอย่างก่อนพิมพ์
       selectedAppointmentId: null,
+      selectedAppointmentDetails: {},
     };
-  },
-  computed: {
-    // isAddingAppointment: false เสมอ เพื่อแสดงทั้งสองส่วน
-    isAddingAppointment() {
-        return !!this.patientId;
-    }
   },
   mounted() {
     if (this.patientId) {
@@ -347,11 +390,13 @@ export default {
         };
         await createAppointmentApi(appointmentData);
         await Swal.fire({ title: 'สำเร็จ!', text: 'เพิ่มการนัดหมายเรียบร้อยแล้ว', icon: 'success', confirmButtonColor: '#3B5F6D' });
-        
-        // อัปเดตตารางและรีเซ็ตฟอร์ม
+
         this.fetchAppointments(this.patientId);
         this.$refs.appointmentForm.reset();
-        
+        this.newAppointment.hn_number = null; // แก้ไขให้ HN และ rights ไม่ถูกรีเซ็ต
+        this.newAppointment.rights = null;
+        this.newAppointment.status = 'รอนัด';
+
       } catch (e) {
         console.error(e);
         await Swal.fire({ title: 'เกิดข้อผิดพลาด', text: 'ไม่สามารถเพิ่มการนัดหมายได้', icon: 'error', confirmButtonColor: '#d33' });
@@ -411,39 +456,64 @@ export default {
       this.chartInstance = new Chart(ctx, { type: 'bar', data, options: { responsive: true, plugins: { legend: { display: false } } } });
     },
 
-    openExportDialog() { this.exportDialog = true; this.selectedAppointmentId = null; },
+    openExportDialog() {
+      this.exportDialog = true;
+      this.selectedAppointmentId = null;
+    },
 
-    async exportAppointmentPDF() {
-      if (!this.selectedAppointmentId) return;
-      const a = this.appointmentHistory.find(x => x.id === this.selectedAppointmentId);
-      if (!a) return;
+    showPrintPreview() {
+      const appointment = this.appointmentHistory.find(a => a.id === this.selectedAppointmentId);
+      if (appointment) {
+        this.selectedAppointmentDetails = appointment;
+        this.exportDialog = false;
+        this.printDialog = true;
+      }
+    },
 
-      const doc = new jsPDF();
-      
-      doc.addFileToVFS('THSarabunNew.ttf', THSarabunNewBase64);
-      doc.addFont('THSarabunNew.ttf', 'THSarabunNew', 'normal');
-      doc.setFont('THSarabunNew');
-
-      doc.setFontSize(16);
-      doc.text('ใบนัดผู้ป่วย', 14, 20);
-      doc.setFontSize(12);
-      doc.text(`HN: ${a.hn_number || 'ไม่ได้ระบุ'}`, 14, 30);
-      doc.text(`ชื่อผู้ป่วย: ${this.patientName}`, 14, 38);
-      doc.text(`วันที่นัดหมาย: ${this.formatDateTime(a.appointment_date, a.appointment_time)}`, 14, 46);
-      doc.text(`แพทย์/ผู้บันทึก: ${a.appointed_by || 'ไม่ได้ระบุ'}`, 14, 54);
-      doc.text(`สถานที่ติดต่อ: ${a.contact_location || 'ไม่ได้ระบุ'}`, 14, 62);
-      doc.text(`วินิจฉัย: ${a.diagnosis || 'ไม่ได้ระบุ'}`, 14, 70);
-      doc.text(`เหตุผล: ${a.reason || 'ไม่ได้ระบุ'}`, 14, 78);
-      doc.text(`รายละเอียดอื่นๆ: ${a.other_details || 'ไม่ได้ระบุ'}`, 14, 86);
-      doc.text(`สถานะ: ${a.status || 'ไม่ได้ระบุ'}`, 14, 94);
-      
-      doc.save(`Appointment_${a.hn_number || 'unknown'}.pdf`);
-      this.exportDialog = false;
+    printAppointment() {
+      window.print();
     },
   },
 };
 </script>
 
-<style scoped>
-.v-application { background-color: #f5f5f5; }
+<style>
+.v-application {
+  background-color: #f5f5f5;
+}
+
+/* สไตล์สำหรับการพิมพ์เท่านั้น */
+@media print {
+  /* ซ่อนแถบเมนูด้านบนและด้านข้าง */
+  .v-app-bar,
+  .v-navigation-drawer,
+  .no-print {
+    display: none !important;
+  }
+  
+  /* กำหนดให้เนื้อหาที่จะพิมพ์เต็มหน้ากระดาษ */
+  .v-main {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  /* ทำให้เนื้อหาหลักอยู่กึ่งกลาง */
+  .v-container {
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 !important;
+  }
+  
+  .v-card {
+    box-shadow: none !important;
+    border: none !important;
+  }
+  
+  /* จัดตำแหน่งให้อยู่กลางหน้ากระดาษและลบขอบที่ไม่จำเป็น */
+  #print-content {
+    width: 100%;
+    margin-top: 50px;
+    padding: 0 !important;
+  }
+}
 </style>
