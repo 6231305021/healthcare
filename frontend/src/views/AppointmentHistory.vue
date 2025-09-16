@@ -119,11 +119,10 @@
 </template>
 
 <script>
-import Swal from 'sweetalert2'
 import axios from 'axios';
 
-const API_PATIENT = import.meta.env.VITE_API_PATIENT;
 const API_APPOINTMENTS = import.meta.env.VITE_API_APPOINTMENTS;
+const API_PATIENT = import.meta.env.VITE_API_PATIENT;
 
 export default {
   name: 'AppointmentHistory',
@@ -163,7 +162,7 @@ export default {
       handler(newVal) {
         if (newVal) {
           this.fetchPatientDetails(newVal);
-          this.fetchAllAppointments(newVal);
+          this.fetchAppointments(newVal);
         } else {
           this.patientName = 'ไม่พบผู้ป่วย';
           this.allAppointments = [];
@@ -178,29 +177,24 @@ export default {
         const token = localStorage.getItem('userToken');
         const headers = token ? { 'x-auth-token': token } : {};
         const response = await axios.get(`${API_PATIENT}${id}`, { headers });
-        this.patientName = response.data.name;
+        this.patientName = response.data.patient.name;
       } catch (error) {
         console.error('โหลดชื่อผู้ป่วยล้มเหลว:', error.response?.data || error.message);
         this.patientName = 'ไม่พบผู้ป่วย';
-        if (error.response?.status === 401) {
-          this.logout();
-        }
+        if (error.response?.status === 401) this.logout();
       }
     },
-    async fetchAllAppointments(patientId) {
+    async fetchAppointments(patientId) {
       this.loadingData = true;
       try {
         const token = localStorage.getItem('userToken');
         const headers = token ? { 'x-auth-token': token } : {};
         const response = await axios.get(`${API_APPOINTMENTS}patient/${patientId}`, { headers });
-        this.allAppointments = response.data.filter(app => app.appointment_date);
-        this.allAppointments.sort((a, b) => new Date(b.appointment_date) - new Date(a.appointment_date));
+        this.allAppointments = response.data;
       } catch (error) {
         console.error('โหลดประวัติการนัดหมายล้มเหลว:', error.response?.data || error.message);
         this.allAppointments = [];
-        if (error.response?.status === 401) {
-          this.logout();
-        }
+        if (error.response?.status === 401) this.logout();
       } finally {
         this.loadingData = false;
       }
@@ -224,7 +218,6 @@ export default {
     goToAddPatient() { this.$router.push('/Addpatient'); },
     goToPatientInfo() { this.$router.push('/patientinfo'); },
     goToMapPage() { this.$router.push('/Map'); },
-  
     exportAppointmentsCSV() {
       const headers = this.headers.map(h => h.text);
       const rows = this.filteredAppointments.map(item => [
@@ -264,19 +257,15 @@ export default {
   .v-toolbar__title {
     font-size: 1.1rem;
   }
-  
   .v-btn {
     padding: 0 8px;
   }
-  
   .v-btn .v-icon {
     margin-right: 4px;
   }
-  
   .v-card {
     padding: 16px;
   }
-  
   .v-data-table {
     font-size: 0.9rem;
   }
@@ -286,32 +275,25 @@ export default {
   .v-toolbar__title {
     font-size: 1rem;
   }
-  
   .v-card {
     padding: 12px;
   }
-  
   .v-card-title {
     font-size: 1.1rem;
   }
-  
   .v-card-text {
     font-size: 0.9rem;
   }
-  
   .v-text-field {
     margin-bottom: 8px;
   }
-  
   .v-btn {
     padding: 0 4px;
     font-size: 0.8rem;
   }
-  
   .v-data-table {
     font-size: 0.8rem;
   }
-  
   .v-chip {
     font-size: 0.8rem;
     height: 24px;
