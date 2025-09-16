@@ -1,6 +1,5 @@
 <template>
   <v-app>
-    <!-- App Bar -->
     <v-app-bar app color="#3B5F6D" dark>
       <v-app-bar-nav-icon @click="drawer = !drawer" class="d-md-none"></v-app-bar-nav-icon>
       <v-toolbar-title class="font-weight-bold">
@@ -16,7 +15,6 @@
       </div>
     </v-app-bar>
 
-    <!-- Navigation Drawer -->
     <v-navigation-drawer v-model="drawer" app temporary>
       <v-list>
         <v-list-item @click="goToUserPage">
@@ -38,11 +36,9 @@
       </v-list>
     </v-navigation-drawer>
 
-    <!-- Main Content -->
     <v-main>
       <v-container class="mt-6">
         <v-row>
-          <!-- Form Section -->
           <v-col cols="12" md="7">
             <v-card class="pa-5 mb-6">
               <v-card-title class="text-h6">บันทึกการนัดหมายใหม่</v-card-title>
@@ -137,7 +133,6 @@
             </v-card>
           </v-col>
 
-          <!-- Chart Section -->
           <v-col cols="12" md="5">
             <v-card class="pa-5">
               <v-card-title class="text-h6">สถิติเข้าตรวจตามนัด</v-card-title>
@@ -146,7 +141,6 @@
           </v-col>
         </v-row>
 
-        <!-- Appointment History Table -->
         <v-card class="mt-6 pa-5">
           <v-card-title class="text-h6 d-flex justify-space-between align-center">
             <span>ประวัติการนัดหมาย</span>
@@ -197,7 +191,6 @@
           </v-data-table>
         </v-card>
 
-        <!-- Export Dialog -->
         <v-dialog v-model="exportDialog" max-width="600px">
           <v-card>
             <v-card-title class="text-h6">เลือกนัดหมายที่ต้องการส่งออกใบนัด</v-card-title>
@@ -226,10 +219,11 @@
 </template>
 
 <script>
-import axios from 'axios';
+// แก้ไข: นำเข้าฟังก์ชันจาก api.js แทน axios โดยตรง
 import Swal from 'sweetalert2';
 import Chart from 'chart.js/auto';
 import jsPDF from 'jspdf';
+import { getPatientById, getAppointmentsByPatientId } from '@/api.js'; // นำเข้าฟังก์ชันที่ถูกต้อง
 
 export default {
   name: 'PatientAppointments',
@@ -302,9 +296,8 @@ export default {
   methods: {
     async fetchPatientDetails(id) {
       try {
-        const token = localStorage.getItem('userToken');
-        const headers = token ? { 'x-auth-token': token } : {};
-        const res = await axios.get(`${import.meta.env.VITE_API_PATIENT}${id}`, { headers });
+        // แก้ไข: ใช้ฟังก์ชัน getPatientById จาก api.js
+        const res = await getPatientById(id);
         this.patientName = res.data.name || res.data.patient?.name || 'ไม่พบชื่อผู้ป่วย';
       } catch (e) {
         console.error(e);
@@ -316,9 +309,8 @@ export default {
     async fetchAppointments(id) {
       this.loadingData = true;
       try {
-        const token = localStorage.getItem('userToken');
-        const headers = token ? { 'x-auth-token': token } : {};
-        const res = await axios.get(`${import.meta.env.VITE_API_APPOINTMENTS}patient/${id}`, { headers });
+        // แก้ไข: ใช้ฟังก์ชัน getAppointmentsByPatientId จาก api.js
+        const res = await getAppointmentsByPatientId(id);
         this.appointmentHistory = Array.isArray(res.data) ? res.data : [];
         this.$nextTick(() => this.updateChart());
       } catch (e) {

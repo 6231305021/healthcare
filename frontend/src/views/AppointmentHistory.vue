@@ -103,7 +103,7 @@
             <template v-slot:item.appointment_time="{ item }">
               {{ item.appointment_time ? item.appointment_time.substring(0, 5) + ' น.' : 'N/A' }}
             </template>
-             <template v-slot:item.status="{ item }">
+              <template v-slot:item.status="{ item }">
                 <v-chip :color="getStatusColor(item.status)" dark>{{ item.status }}</v-chip>
             </template>
             <template v-slot:no-results>
@@ -119,10 +119,11 @@
 </template>
 
 <script>
+// แก้ไข: ลบ axios ที่ไม่ได้ใช้งาน และนำเข้าฟังก์ชันที่ถูกต้องจาก api.js
 import Swal from 'sweetalert2'
-import axios from 'axios';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { getPatientById, getAppointmentsByPatientId } from '@/api.js';
 
 export default {
   name: 'AppointmentHistory',
@@ -174,10 +175,8 @@ export default {
   methods: {
     async fetchPatientDetails(id) {
       try {
-        const token = localStorage.getItem('userToken');
-        const headers = token ? { 'x-auth-token': token } : {};
-        // ใช้ URL จาก .env
-        const response = await axios.get(`${import.meta.env.VITE_API_PATIENT}${id}`, { headers });
+        // แก้ไข: ใช้ฟังก์ชัน getPatientById จาก api.js แทน axios
+        const response = await getPatientById(id);
         this.patientName = response.data.name;
       } catch (error) {
         console.error('โหลดชื่อผู้ป่วยล้มเหลว:', error.response?.data || error.message);
@@ -188,10 +187,8 @@ export default {
     async fetchAllAppointments(patientId) {
       this.loadingData = true;
       try {
-        const token = localStorage.getItem('userToken');
-        const headers = token ? { 'x-auth-token': token } : {};
-        // ใช้ URL จาก .env
-        const response = await axios.get(`${import.meta.env.VITE_API_APPOINTMENTS}patient/${patientId}`, { headers });
+        // แก้ไข: ใช้ฟังก์ชัน getAppointmentsByPatientId จาก api.js แทน axios
+        const response = await getAppointmentsByPatientId(patientId);
         this.allAppointments = response.data.filter(app => app.appointment_date);
         this.allAppointments.sort((a, b) => new Date(b.appointment_date) - new Date(a.appointment_date));
       } catch (error) {
@@ -221,7 +218,7 @@ export default {
     goToAddPatient() { this.$router.push('/Addpatient'); },
     goToPatientInfo() { this.$router.push('/patientinfo'); },
     goToMapPage() { this.$router.push('/Map'); },
-  
+    
     exportAppointmentsCSV() {
       const headers = this.headers.map(h => h.text);
       const rows = this.filteredAppointments.map(item => [
