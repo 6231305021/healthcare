@@ -264,24 +264,28 @@ export default {
 </script>
 
 <style scoped>
-.background-image { position: fixed; top:0; left:0; width:100vw; height:100vh; background-image:url('/backgroundvue.png'); background-size:cover; background-position:center center; filter:blur(6px); z-index: -1; }
-.map-container { position:relative; z-index:1; padding:24px; display: flex; flex-direction: column; height: 100%; }
-.map-card { 
-  background-color:white; 
-  border-radius:15px; 
-  box-shadow:0 4px 6px rgba(0,0,0,0.1), 0 10px 20px rgba(0,0,0,0.15); 
-  height: 100%; 
-  display: flex; 
-  flex-direction: column; 
+/*
+ * แก้ไขเฉพาะส่วนนี้เพื่อกำหนดขนาดของแผนที่
+ * ทำให้แผนที่แสดงผลได้เต็มพื้นที่และมีขนาดที่เหมาะสม
+ */
+#map {
+  width: 100%;
+  height: 600px; /* กำหนดความสูงแบบตายตัวเป็นพิกเซล */
+  min-height: 400px; /* กำหนดความสูงขั้นต่ำเพื่อป้องกันการหดตัวบนมือถือ */
 }
-.map-content { width:100%; flex-grow: 1; border-radius:12px; border:2px solid #92D7D0; overflow:hidden; }
+
+/* ส่วน CSS อื่นๆ ที่มีอยู่เดิม */
+.background-image { position: fixed; top:0; left:0; width:100vw; height:100vh; background-image:url('/backgroundvue.png'); background-size:cover; background-position:center center; filter:blur(6px); }
+.map-container { position:relative; z-index:1; padding:24px; }
+.map-card { background-color:white; border-radius:15px; box-shadow:0 4px 6px rgba(0,0,0,0.1); }
+.map-content { border-radius:12px; border:2px solid #92D7D0; overflow:hidden; }
 .search-field { background:rgba(255,255,255,0.9); border-radius:8px; }
 .search-btn { margin-left:8px; height:40px !important; }
-.coordinate-card { background:rgba(255,255,255,0.9)!important; border-radius:12px!important; margin-top:16px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+.coordinate-card { background:rgba(255,255,255,0.9)!important; border-radius:12px!important; margin-top:16px; }
 
 @media(max-width:768px){
-  .map-content {
-    height: 100%;
+  #map {
+    height: 400px; /* ปรับความสูงสำหรับมือถือ */
   }
 }
 .popup-content img.popup-image {
@@ -291,33 +295,5 @@ export default {
   margin: 0 auto 10px;
   border-radius: 50%;
   border: 2px solid #3B5F6D;
-}
-
-/* เพิ่มสไตล์สำหรับข้อมูลใน Pop-up */
-.popup-content h3 {
-  color: #3B5F6D;
-  text-align: center;
-  margin-bottom: 10px;
-}
-.popup-content p {
-  margin: 5px 0;
-}
-.info-item {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.info-label {
-  font-weight: bold;
-  color: #3B5F6D;
-  margin-right: 8px;
-  min-width: 120px;
-}
-
-.info-value {
-  flex: 1;
-  color: #555;
 }
 </style>

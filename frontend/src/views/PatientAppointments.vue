@@ -1,10 +1,8 @@
 <template>
   <v-app>
     <v-app-bar app color="#3B5F6D" dark>
-      <v-btn icon @click="$router.back()">
-        <v-icon>mdi-arrow-left</v-icon>
-      </v-btn>
-      <v-toolbar-title class="font-weight-bold ml-2">
+      <v-app-bar-nav-icon @click="drawer = !drawer" class="d-md-none"></v-app-bar-nav-icon>
+      <v-toolbar-title class="font-weight-bold">
         <v-icon left>mdi-calendar-edit</v-icon>
         การนัดหมายผู้ป่วย: {{ patientName }}
       </v-toolbar-title>
@@ -17,10 +15,31 @@
       </div>
     </v-app-bar>
 
+    <v-navigation-drawer v-model="drawer" app temporary>
+      <v-list>
+        <v-list-item @click="goToUserPage">
+          <v-list-item-icon><v-icon>mdi-account</v-icon></v-list-item-icon>
+          <v-list-item-content><v-list-item-title>ข้อมูลส่วนตัว</v-list-item-title></v-list-item-content>
+        </v-list-item>
+        <v-list-item @click="goToAddPatient">
+          <v-list-item-icon><v-icon>mdi-account-plus</v-icon></v-list-item-icon>
+          <v-list-item-content><v-list-item-title>เพิ่มผู้ป่วยใหม่</v-list-item-title></v-list-item-content>
+        </v-list-item>
+        <v-list-item @click="goToPatientInfo">
+          <v-list-item-icon><v-icon>mdi-account-group</v-icon></v-list-item-icon>
+          <v-list-item-content><v-list-item-title>ข้อมูลผู้ป่วย</v-list-item-title></v-list-item-content>
+        </v-list-item>
+        <v-list-item @click="goToMapPage">
+          <v-list-item-icon><v-icon>mdi-map-marker-multiple</v-icon></v-list-item-icon>
+          <v-list-item-content><v-list-item-title>แผนที่ผู้ป่วย</v-list-item-title></v-list-item-content>
+        </v-list-item>
+      </v-list>
+    </v-navigation-drawer>
+
     <v-main>
       <v-container class="mt-6">
-        <v-row v-if="isAddingAppointment">
-          <v-col cols="12">
+        <v-row>
+          <v-col cols="12" md="7">
             <v-card class="pa-5 mb-6">
               <v-card-title class="text-h6">บันทึกการนัดหมายใหม่</v-card-title>
               <v-card-text>
@@ -51,6 +70,8 @@
                         prepend-icon="mdi-calendar"
                         :rules="[v => !!v || 'กรุณาใส่วันที่นัดหมาย']"
                         required
+                        outlined
+                        dense
                         type="date"
                       />
                     </v-col>
@@ -70,6 +91,8 @@
                             v-bind="attrs"
                             :rules="[v => !!v || 'กรุณาใส่เวลานัดหมาย']"
                             required
+                            outlined
+                            dense
                             placeholder="HH:MM"
                           />
                         </template>
@@ -109,9 +132,7 @@
               </v-card-actions>
             </v-card>
           </v-col>
-        </v-row>
-        
-        <v-row v-else>
+
           <v-col cols="12" md="5">
             <v-card class="pa-5">
               <v-card-title class="text-h6">สถิติเข้าตรวจตามนัด</v-card-title>
@@ -119,7 +140,7 @@
             </v-card>
           </v-col>
 
-          <v-col cols="12" md="7">
+          <v-col cols="12">
             <v-card class="mt-6 pa-5">
               <v-card-title class="text-h6 d-flex justify-space-between align-center">
                 <span>ประวัติการนัดหมาย</span>
@@ -203,11 +224,10 @@
 import Swal from 'sweetalert2';
 import Chart from 'chart.js/auto';
 import jsPDF from 'jspdf';
-// แก้ไขการนำเข้าให้ถูกต้อง: addAppointment as createAppointmentApi
 import { getPatientById, getAppointmentsByPatientId, createAppointment as createAppointmentApi, deleteAppointment as deleteAppointmentApi } from '@/api.js';
 
 // ข้อมูลฟอนต์ THSarabunNew (Base64) - ใช้แค่บางส่วนตามที่คุณให้มา
-const THSarabunNewBase64 = `AAUWBwACAABNYWMgT1MgWCAgICAgICAgAAIAAAAJAAAAMgAAAKAAAAACAAAA0gAAAABzZm50AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQVRUUgAAAAAAAADSAAAAqAAAACoAAAAAAAAAAAAAAAAAAAABAAAAqAAAACoAACRjb20uYXBwbGUubWV0YWRhdGE6X2tNREl0ZW1Vc2VyVGFncwAAYnBsaXN0MDCgCAAAAAAAAAEBAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAJ`; // ข้อมูล Base64 ของฟอนต์ที่ตัดมา
+const THSarabunNewBase64 = `AAUWBwACAABNYWMgT1MgWCAgICAgICAgAAIAAAAJAAAAMgAAAKAAAAACAAAA0gAAAABzZm50AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQVRUUgAAAAAAAADSAAAAqAAAACoAAAAAAAAAAAAAAAAAAAABAAAAqAAAACoAACRjb20uYXBwbGUubWV0YWRhdGE6X2tNREl0ZW1Vc2VyVGFncwAAYnBsaXN0MDCgCAAAAAAAAAEBAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAJ`;
 
 export default {
   name: 'PatientAppointments',
@@ -258,30 +278,27 @@ export default {
     };
   },
   computed: {
+    // isAddingAppointment: false เสมอ เพื่อแสดงทั้งสองส่วน
     isAddingAppointment() {
-      // ตรวจสอบว่า route มี patientId จาก params หรือไม่
-      return !!this.patientId;
+        return !!this.patientId;
     }
   },
   mounted() {
-    this.init();
+    if (this.patientId) {
+      this.fetchPatientDetails(this.patientId);
+      this.fetchAppointments(this.patientId);
+    }
   },
   watch: {
     '$route.params.patientId'(newId) {
       if (newId) {
-        this.init();
+        this.patientId = newId;
+        this.fetchPatientDetails(this.patientId);
+        this.fetchAppointments(this.patientId);
       }
     },
   },
   methods: {
-    init() {
-      if (this.isAddingAppointment) {
-        this.fetchPatientDetails(this.patientId);
-      } else {
-        // ถ้าไม่มี patientId ใน params ให้ไปหน้า PatientInfo
-        this.$router.push('/patientinfo');
-      }
-    },
     goToUserPage() { this.$router.push('/profile'); },
     goToAddPatient() { this.$router.push('/Addpatient'); },
     goToPatientInfo() { this.$router.push('/patientinfo'); },
@@ -328,11 +345,13 @@ export default {
           appointment_date: this.datePicker,
           appointment_time: this.timePicker,
         };
-        // ใช้ createAppointmentApi เพื่อส่งข้อมูล
         await createAppointmentApi(appointmentData);
         await Swal.fire({ title: 'สำเร็จ!', text: 'เพิ่มการนัดหมายเรียบร้อยแล้ว', icon: 'success', confirmButtonColor: '#3B5F6D' });
-        // เมื่อเพิ่มเสร็จให้กลับไปหน้า PatientInfo
-        this.$router.push('/patientinfo');
+        
+        // อัปเดตตารางและรีเซ็ตฟอร์ม
+        this.fetchAppointments(this.patientId);
+        this.$refs.appointmentForm.reset();
+        
       } catch (e) {
         console.error(e);
         await Swal.fire({ title: 'เกิดข้อผิดพลาด', text: 'ไม่สามารถเพิ่มการนัดหมายได้', icon: 'error', confirmButtonColor: '#d33' });
