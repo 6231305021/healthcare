@@ -3,22 +3,26 @@
     <v-app-bar app color="#3B5F6D" dark>
       <v-app-bar-nav-icon @click="drawer = !drawer" class="d-md-none"></v-app-bar-nav-icon>
       <v-toolbar-title class="font-weight-bold">
-        <v-icon left>mdi-calendar-edit</v-icon>
-        การนัดหมายผู้ป่วย: {{ patientName }}
+        <v-icon left>mdi-history</v-icon>
+        ประวัติการนัดหมาย: {{ patientName }}
       </v-toolbar-title>
       <v-spacer></v-spacer>
       <div class="d-none d-md-flex">
         <v-btn text @click="goToUserPage">
-          <v-icon left>mdi-account</v-icon> ข้อมูลส่วนตัว
+          <v-icon left>mdi-account</v-icon>
+          ข้อมูลส่วนตัว
         </v-btn>
         <v-btn text @click="goToAddPatient">
-          <v-icon left>mdi-account-plus</v-icon> เพิ่มผู้ป่วยใหม่
+          <v-icon left>mdi-account-plus</v-icon>
+          เพิ่มผู้ป่วยใหม่
         </v-btn>
         <v-btn text @click="goToPatientInfo">
-          <v-icon left>mdi-account-group</v-icon> ข้อมูลผู้ป่วย
+          <v-icon left>mdi-account-group</v-icon>
+          ข้อมูลผู้ป่วย
         </v-btn>
         <v-btn text @click="goToMapPage">
-          <v-icon left>mdi-map-marker-multiple</v-icon> แผนที่ผู้ป่วย
+          <v-icon left>mdi-map-marker-multiple</v-icon>
+          แผนที่ผู้ป่วย
         </v-btn>
       </div>
     </v-app-bar>
@@ -26,175 +30,86 @@
     <v-navigation-drawer v-model="drawer" app temporary>
       <v-list>
         <v-list-item @click="goToUserPage">
-          <v-list-item-icon><v-icon>mdi-account</v-icon></v-list-item-icon>
-          <v-list-item-content><v-list-item-title>ข้อมูลส่วนตัว</v-list-item-title></v-list-item-content>
+          <v-list-item-icon>
+            <v-icon>mdi-account</v-icon>
+          </v-list-item-icon>
+          <v-list-item-content>
+            <v-list-item-title>ข้อมูลส่วนตัว</v-list-item-title>
+          </v-list-item-content>
         </v-list-item>
         <v-list-item @click="goToAddPatient">
-          <v-list-item-icon><v-icon>mdi-account-plus</v-icon></v-list-item-icon>
-          <v-list-item-content><v-list-item-title>เพิ่มผู้ป่วยใหม่</v-list-item-title></v-list-item-content>
+          <v-list-item-icon>
+            <v-icon>mdi-account-plus</v-icon>
+          </v-list-item-icon>
+          <v-list-item-content>
+            <v-list-item-title>เพิ่มผู้ป่วยใหม่</v-list-item-title>
+          </v-list-item-content>
         </v-list-item>
         <v-list-item @click="goToPatientInfo">
-          <v-list-item-icon><v-icon>mdi-account-group</v-icon></v-list-item-icon>
-          <v-list-item-content><v-list-item-title>ข้อมูลผู้ป่วย</v-list-item-title></v-list-item-content>
+          <v-list-item-icon>
+            <v-icon>mdi-account-group</v-icon>
+          </v-list-item-icon>
+          <v-list-item-content>
+            <v-list-item-title>ข้อมูลผู้ป่วย</v-list-item-title>
+          </v-list-item-content>
         </v-list-item>
         <v-list-item @click="goToMapPage">
-          <v-list-item-icon><v-icon>mdi-map-marker-multiple</v-icon></v-list-item-icon>
-          <v-list-item-content><v-list-item-title>แผนที่ผู้ป่วย</v-list-item-title></v-list-item-content>
+          <v-list-item-icon>
+            <v-icon>mdi-map-marker-multiple</v-icon>
+          </v-list-item-icon>
+          <v-list-item-content>
+            <v-list-item-title>แผนที่ผู้ป่วย</v-list-item-title>
+          </v-list-item-content>
         </v-list-item>
       </v-list>
     </v-navigation-drawer>
 
     <v-main>
       <v-container class="mt-6">
-        <v-row>
-          <!-- Form Section -->
-          <v-col cols="12" md="7">
-            <v-card class="pa-5 mb-6">
-              <v-card-title class="text-h6">บันทึกการนัดหมายใหม่</v-card-title>
-              <v-card-text>
-                <v-form ref="appointmentForm" v-model="valid" lazy-validation>
-                  <v-row>
-                    <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="newAppointment.hn_number"
-                        label="หมายเลข HN"
-                        prepend-icon="mdi-identifier"
-                      />
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="newAppointment.rights"
-                        label="สิทธิการรักษา"
-                        prepend-icon="mdi-shield-account"
-                      />
-                    </v-col>
-                    <v-col cols="12" sm="6" md="6">
-                      <v-text-field
-                        v-model="datePicker"
-                        label="วันที่นัดหมาย"
-                        prepend-icon="mdi-calendar"
-                        outlined
-                        dense
-                        type="date"
-                      />
-                    </v-col>
-                    <v-col cols="12" sm="6" md="6">
-                      <v-menu
-                        v-model="timeMenu"
-                        :close-on-content-click="false"
-                        transition="scale-transition"
-                        offset-y
-                        min-width="290px"
-                      >
-                        <template v-slot:activator="{ on, attrs }">
-                          <v-text-field
-                            v-model="timePicker"
-                            label="เวลานัดหมาย"
-                            prepend-icon="mdi-clock"
-                            v-bind="attrs"
-                            outlined
-                            dense
-                            placeholder="HH:MM"
-                          />
-                        </template>
-                        <v-time-picker
-                          v-model="timePicker"
-                          format="24hr"
-                          @input="timeMenu = false"
-                        />
-                      </v-menu>
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="newAppointment.reason"
-                        label="เหตุผลการนัดหมาย"
-                        prepend-icon="mdi-text-box-outline"
-                      />
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="newAppointment.appointed_by"
-                        label="แพทย์ผู้นัด / ผู้บันทึกนัด"
-                        prepend-icon="mdi-medical-bag"
-                      />
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="newAppointment.contact_location"
-                        label="สถานที่ติดต่อ"
-                        prepend-icon="mdi-map-marker-radius"
-                      />
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="newAppointment.diagnosis"
-                        label="วินิจฉัย"
-                        prepend-icon="mdi-stethoscope"
-                      />
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="newAppointment.other_details"
-                        label="รายละเอียดอื่นๆ (เช่น LAB/X-Ray)"
-                        prepend-icon="mdi-note-text-outline"
-                      />
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <v-select
-                        v-model="newAppointment.status"
-                        :items="statusOptions"
-                        label="สถานะการนัดหมาย"
-                        prepend-icon="mdi-check-circle-outline"
-                      />
-                    </v-col>
-                  </v-row>
-                </v-form>
-              </v-card-text>
-              <v-card-actions>
-                <v-spacer />
-                <v-btn
-                  color="#3B5F6D"
-                  dark
-                  @click="addAppointment"
-                  :loading="loading"
-                >
-                  <v-icon left>mdi-plus</v-icon> เพิ่มการนัดหมาย
-                </v-btn>
-              </v-card-actions>
-            </v-card>
-          </v-col>
-
-          <!-- Chart Section -->
-          <v-col cols="12" md="5">
-            <v-card class="pa-5">
-              <v-card-title class="text-h6">สถิติเข้าตรวจตามนัด</v-card-title>
-              <v-card-text>
-                <canvas id="appointmentChart"></canvas>
-              </v-card-text>
-            </v-card>
-          </v-col>
-        </v-row>
-
-        <!-- Appointment History -->
-        <v-card class="mt-6 pa-5">
+        <v-card class="pa-5">
           <v-card-title class="text-h6 d-flex justify-space-between align-center">
-            <span>ประวัติการนัดหมาย</span>
+            <span>ประวัติการนัดหมายทั้งหมด</span>
+            <div>
+              <v-btn color="#3B5F6D" dark @click="exportAppointmentsCSV" :disabled="filteredAppointments.length === 0" class="ml-2">
+                <v-icon left>mdi-file-delimited</v-icon>
+                ส่งออก CSV
+              </v-btn>
+            </div>
           </v-card-title>
+          <v-text-field
+            v-model="search"
+            label="ค้นหาสาเหตุการนัด, ผู้นัด หรือสถานะ"
+            append-icon="mdi-magnify"
+            outlined
+            dense
+            class="mb-4"
+          />
           <v-data-table
             :headers="headers"
-            :items="appointmentHistory"
+            :items="filteredAppointments"
             :loading="loadingData"
-            item-key="id"
+            :search="search"
             class="elevation-1"
+            :items-per-page="10"
+            :footer-props="{
+                'items-per-page-text': 'รายการต่อหน้า',
+                'items-per-page-options': [5, 10, 25, 50, -1]
+            }"
+            no-data-text="ไม่พบประวัติการนัดหมายสำหรับผู้ป่วยนี้"
           >
-            <template v-slot:item.appointment_datetime="{ item }">
-              {{ formatDateTime(item.appointment_date, item.appointment_time) }}
+            <template v-slot:item.appointment_date="{ item }">
+              {{ formatDate(item.appointment_date) }}
             </template>
-            <template v-slot:item.status="{ item }">
-              <v-chip :color="getStatusColor(item.status)" dark>{{ item.status }}</v-chip>
+            <template v-slot:item.appointment_time="{ item }">
+              {{ item.appointment_time ? item.appointment_time.substring(0, 5) + ' น.' : 'N/A' }}
             </template>
-            <template v-slot:no-data>
-              ไม่มีข้อมูลการนัดหมายสำหรับผู้ป่วยนี้
+             <template v-slot:item.status="{ item }">
+                <v-chip :color="getStatusColor(item.status)" dark>{{ item.status }}</v-chip>
+            </template>
+            <template v-slot:no-results>
+              <v-alert :value="true" color="warning" icon="mdi-alert">
+                ไม่พบผลลัพธ์สำหรับการค้นหา "{{ search }}"
+              </v-alert>
             </template>
           </v-data-table>
         </v-card>
@@ -204,119 +119,160 @@
 </template>
 
 <script>
+import Swal from 'sweetalert2'
 import axios from 'axios';
-import Swal from 'sweetalert2';
-import Chart from 'chart.js/auto';
-
-const API_PATIENT = import.meta.env.VITE_API_PATIENT;
-const API_APPOINTMENTS = import.meta.env.VITE_API_APPOINTMENTS;
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default {
-  name: 'PatientAppointments',
+  name: 'AppointmentHistory',
+  props: {
+    patientId: {
+      type: Number,
+      required: true,
+    },
+  },
   data() {
     return {
       drawer: false,
       patientName: 'กำลังโหลด...',
-      appointmentHistory: [],
-      newAppointment: {
-        hn_number: null,
-        rights: null,
-        reason: null,
-        appointed_by: null,
-        contact_location: null,
-        other_details: null,
-        diagnosis: null,
-        status: 'รอนัด',
-      },
-      patientId: null,
-      datePicker: new Date().toISOString().substr(0, 10),
-      timePicker: new Date().toTimeString().substr(0, 5),
-      timeMenu: false,
-      valid: false,
-      loading: false,
-      loadingData: false,
-      statusOptions: ['มาตามนัด', 'ไม่มาตามนัด', 'ส่งต่อรักษา', 'รอนัด'],
+      allAppointments: [],
+      loadingData: true,
+      search: '',
       headers: [
-        { text: 'วันที่/เวลา', value: 'appointment_datetime' },
-        { text: 'HN', value: 'hn_number' },
-        { text: 'สิทธิการรักษา', value: 'rights' },
-        { text: 'เหตุผล', value: 'reason' },
-        { text: 'แพทย์/ผู้บันทึก', value: 'appointed_by' },
+        { text: 'วันที่นัด', value: 'appointment_date' },
+        { text: 'เวลานัด', value: 'appointment_time' },
+        { text: 'สาเหตุ', value: 'reason' },
+        { text: 'แพทย์ผู้นัด', value: 'appointed_by' },
         { text: 'สถานที่ติดต่อ', value: 'contact_location' },
-        { text: 'วินิจฉัย', value: 'diagnosis' },
-        { text: 'รายละเอียดอื่นๆ', value: 'other_details' },
+        { text: 'อื่นๆ', value: 'other_details' },
+        { text: 'วินิจฉัยโรค', value: 'diagnosis' },
         { text: 'สถานะ', value: 'status' },
       ],
-      chartInstance: null,
-      chartColors: {
-        'มาตามนัด': '#4CAF50',
-        'ไม่มาตามนัด': '#F44336',
-        'ส่งต่อรักษา': '#2196F3',
-        'รอนัด': '#FF9800',
-      },
     };
   },
-  mounted() {
-    this.patientId = this.$route.query.patientId || null;
-    if (this.patientId) {
-      this.fetchPatientDetails(this.patientId);
-      this.fetchAppointments(this.patientId);
+  computed: {
+    filteredAppointments() {
+      return Array.isArray(this.allAppointments) ? this.allAppointments : [];
     }
+  },
+  watch: {
+    patientId: {
+      immediate: true,
+      handler(newVal) {
+        if (newVal) {
+          this.fetchPatientDetails(newVal);
+          this.fetchAllAppointments(newVal);
+        } else {
+          this.patientName = 'ไม่พบผู้ป่วย';
+          this.allAppointments = [];
+          this.loadingData = false;
+        }
+      },
+    },
   },
   methods: {
     async fetchPatientDetails(id) {
       try {
         const token = localStorage.getItem('userToken');
         const headers = token ? { 'x-auth-token': token } : {};
-        const response = await axios.get(`${API_PATIENT}${id}`, { headers });
-        this.patientName = response.data.patient?.name || response.data.name || 'ไม่พบชื่อผู้ป่วย';
+        // ใช้ URL จาก .env
+        const response = await axios.get(`${import.meta.env.VITE_API_PATIENT}${id}`, { headers });
+        this.patientName = response.data.name;
       } catch (error) {
-        console.error(error);
+        console.error('โหลดชื่อผู้ป่วยล้มเหลว:', error.response?.data || error.message);
         this.patientName = 'ไม่พบผู้ป่วย';
+        if (error.response?.status === 401) this.logout();
       }
     },
-    async fetchAppointments(id) {
+    async fetchAllAppointments(patientId) {
       this.loadingData = true;
       try {
         const token = localStorage.getItem('userToken');
         const headers = token ? { 'x-auth-token': token } : {};
-        const response = await axios.get(`${API_APPOINTMENTS}patient/${id}`, { headers });
-        this.appointmentHistory = Array.isArray(response.data) ? response.data : (response.data.appointments || []);
-        this.$nextTick(() => this.updateChart());
+        // ใช้ URL จาก .env
+        const response = await axios.get(`${import.meta.env.VITE_API_APPOINTMENTS}patient/${patientId}`, { headers });
+        this.allAppointments = response.data.filter(app => app.appointment_date);
+        this.allAppointments.sort((a, b) => new Date(b.appointment_date) - new Date(a.appointment_date));
       } catch (error) {
-        console.error(error);
-        this.appointmentHistory = [];
+        console.error('โหลดประวัติการนัดหมายล้มเหลว:', error.response?.data || error.message);
+        this.allAppointments = [];
+        if (error.response?.status === 401) this.logout();
       } finally {
         this.loadingData = false;
       }
     },
-    formatDateTime(date, time) {
-      if (!date) return '-';
-      const d = new Date(`${date}T${time || '00:00'}`);
-      return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+    formatDate(dateString) {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      return date.toLocaleDateString('th-TH');
     },
     getStatusColor(status) {
-      return this.chartColors[status] || '#000';
+        switch (status) {
+            case 'มาตามนัด': return 'success';
+            case 'ไม่มาตามนัด': return 'error';
+            case 'ส่งต่อรักษา': return 'warning';
+            case 'รอนัด': return 'info';
+            default: return 'grey';
+        }
     },
-    updateChart() {
-      if (!this.appointmentHistory.length) return;
-      const counts = {};
-      this.statusOptions.forEach(s => counts[s] = 0);
-      this.appointmentHistory.forEach(a => {
-        if (counts[a.status] !== undefined) counts[a.status]++;
+    goToUserPage() { this.$router.push('/profile'); },
+    logout() { localStorage.removeItem('userToken'); localStorage.removeItem('userData'); this.$router.push('/'); },
+    goToAddPatient() { this.$router.push('/Addpatient'); },
+    goToPatientInfo() { this.$router.push('/patientinfo'); },
+    goToMapPage() { this.$router.push('/Map'); },
+  
+    exportAppointmentsCSV() {
+      const headers = this.headers.map(h => h.text);
+      const rows = this.filteredAppointments.map(item => [
+        item.appointment_date ? "'" + (new Date(item.appointment_date).toISOString().slice(0, 10)) + "'" : '',
+        item.appointment_time ? item.appointment_time.substring(0, 5) + ' น.' : 'N/A',
+        item.reason || '-',
+        item.appointed_by || '-',
+        item.contact_location || '-',
+        item.other_details || '-',
+        item.diagnosis || '-',
+        item.status || '-',
+      ]);
+      let csvContent = '';
+      csvContent += '\uFEFF' + headers.join(',') + '\n';
+      rows.forEach(row => {
+        const safeRow = row.map(cell => '"' + String(cell).replace(/"/g, '""') + '"');
+        csvContent += safeRow.join(',') + '\n';
       });
-      const data = {
-        labels: this.statusOptions,
-        datasets: [{
-          label: 'สถานะการนัดหมาย',
-          data: this.statusOptions.map(s => counts[s]),
-          backgroundColor: this.statusOptions.map(s => this.chartColors[s])
-        }]
-      };
-      if (this.chartInstance) this.chartInstance.destroy();
-      const ctx = document.getElementById('appointmentChart').getContext('2d');
-      this.chartInstance = new Chart(ctx, { type: 'bar', data });
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute('download', 'appointment-history.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     },
-  }
+  },
 };
 </script>
+
+<style scoped>
+.v-card {
+  border-radius: 10px;
+}
+
+@media (max-width: 960px) {
+  .v-toolbar__title { font-size: 1.1rem; }
+  .v-btn { padding: 0 8px; }
+  .v-btn .v-icon { margin-right: 4px; }
+  .v-card { padding: 16px; }
+  .v-data-table { font-size: 0.9rem; }
+}
+
+@media (max-width: 600px) {
+  .v-toolbar__title { font-size: 1rem; }
+  .v-card { padding: 12px; }
+  .v-card-title { font-size: 1.1rem; }
+  .v-card-text { font-size: 0.9rem; }
+  .v-text-field { margin-bottom: 8px; }
+  .v-btn { padding: 0 4px; font-size: 0.8rem; }
+  .v-data-table { font-size: 0.8rem; }
+  .v-chip { font-size: 0.8rem; height: 24px; }
+}
+</style>
