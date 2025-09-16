@@ -54,14 +54,11 @@
               <v-card-text>
                 <v-form ref="appointmentForm" v-model="valid" lazy-validation>
                   <v-row>
-                    <!-- ฟอร์มบันทึกการนัดหมาย -->
                     <v-col cols="12" md="6">
                       <v-text-field
                         v-model="newAppointment.hn_number"
                         label="หมายเลข HN"
                         prepend-icon="mdi-identifier"
-                        :rules="[v => !!v || 'กรุณากรอกหมายเลข HN']"
-                        required
                       />
                     </v-col>
                     <v-col cols="12" md="6">
@@ -69,8 +66,6 @@
                         v-model="newAppointment.rights"
                         label="สิทธิการรักษา"
                         prepend-icon="mdi-shield-account"
-                        :rules="[v => !!v || 'กรุณากรอกสิทธิการรักษา']"
-                        required
                       />
                     </v-col>
                     <v-col cols="12" sm="6" md="6">
@@ -78,8 +73,6 @@
                         v-model="datePicker"
                         label="วันที่นัดหมาย"
                         prepend-icon="mdi-calendar"
-                        :rules="[v => !!v || 'กรุณาใส่วันที่นัดหมาย']"
-                        required
                         outlined
                         dense
                         type="date"
@@ -99,11 +92,8 @@
                             label="เวลานัดหมาย"
                             prepend-icon="mdi-clock"
                             v-bind="attrs"
-                            :rules="[v => !!v || 'กรุณาใส่เวลานัดหมาย']"
-                            required
                             outlined
                             dense
-                            placeholder="HH:MM"
                           />
                         </template>
                         <v-time-picker
@@ -114,39 +104,19 @@
                       </v-menu>
                     </v-col>
                     <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="newAppointment.reason"
-                        label="เหตุผลการนัดหมาย"
-                        prepend-icon="mdi-text-box-outline"
-                      />
+                      <v-text-field v-model="newAppointment.reason" label="เหตุผลการนัดหมาย" prepend-icon="mdi-text-box-outline" />
                     </v-col>
                     <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="newAppointment.appointed_by"
-                        label="แพทย์ผู้นัด / ผู้บันทึกนัด"
-                        prepend-icon="mdi-medical-bag"
-                      />
+                      <v-text-field v-model="newAppointment.appointed_by" label="แพทย์ผู้นัด / ผู้บันทึกนัด" prepend-icon="mdi-medical-bag" />
                     </v-col>
                     <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="newAppointment.contact_location"
-                        label="สถานที่ติดต่อ"
-                        prepend-icon="mdi-map-marker-radius"
-                      />
+                      <v-text-field v-model="newAppointment.contact_location" label="สถานที่ติดต่อ" prepend-icon="mdi-map-marker-radius" />
                     </v-col>
                     <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="newAppointment.diagnosis"
-                        label="วินิจฉัย"
-                        prepend-icon="mdi-stethoscope"
-                      />
+                      <v-text-field v-model="newAppointment.diagnosis" label="วินิจฉัย" prepend-icon="mdi-stethoscope" />
                     </v-col>
                     <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="newAppointment.other_details"
-                        label="รายละเอียดอื่นๆ (เช่น LAB/X-Ray)"
-                        prepend-icon="mdi-note-text-outline"
-                      />
+                      <v-text-field v-model="newAppointment.other_details" label="รายละเอียดอื่นๆ (เช่น LAB/X-Ray)" prepend-icon="mdi-note-text-outline" />
                     </v-col>
                     <v-col cols="12" md="6">
                       <v-select
@@ -154,8 +124,6 @@
                         :items="statusOptions"
                         label="สถานะการนัดหมาย"
                         prepend-icon="mdi-check-circle-outline"
-                        :rules="[v => !!v || 'กรุณาเลือกสถานะ']"
-                        required
                       />
                     </v-col>
                   </v-row>
@@ -163,13 +131,7 @@
               </v-card-text>
               <v-card-actions>
                 <v-spacer />
-                <v-btn
-                  color="#3B5F6D"
-                  dark
-                  @click="addAppointment"
-                  :loading="loading"
-                  :disabled="!valid"
-                >
+                <v-btn color="#3B5F6D" dark @click="addAppointment" :loading="loading">
                   <v-icon left>mdi-plus</v-icon> เพิ่มการนัดหมาย
                 </v-btn>
               </v-card-actions>
@@ -191,20 +153,21 @@
         <v-card class="mt-6 pa-5">
           <v-card-title class="text-h6 d-flex justify-space-between align-center">
             <span>ประวัติการนัดหมาย</span>
-            <v-btn color="#3B5F6D" dark @click="openExportDialog" :disabled="appointmentHistory.length === 0">
-              <v-icon left>mdi-printer</v-icon> ส่งออกใบนัด
-            </v-btn>
           </v-card-title>
           <v-data-table
             :headers="headers"
             :items="appointmentHistory"
             :loading="loadingData"
-            class="elevation-1"
             item-key="id"
-            id="appointmentTable"
           >
             <template v-slot:item.appointment_datetime="{ item }">
               {{ formatDateTime(item.appointment_date, item.appointment_time) }}
+            </template>
+            <template v-slot:item.hn_number="{ item }">
+              {{ item.hn_number || '-' }}
+            </template>
+            <template v-slot:item.rights="{ item }">
+              {{ item.rights || '-' }}
             </template>
             <template v-slot:item.status="{ item }">
               <v-chip :color="getStatusColor(item.status)" dark>{{ item.status }}</v-chip>
@@ -217,30 +180,6 @@
             </template>
           </v-data-table>
         </v-card>
-
-        <!-- Export Dialog -->
-        <v-dialog v-model="exportDialog" max-width="600px">
-          <v-card>
-            <v-card-title class="text-h6">เลือกนัดหมายที่ต้องการส่งออกใบนัด</v-card-title>
-            <v-card-text>
-              <v-select
-                v-model="selectedAppointmentId"
-                :items="appointmentHistory.map(a => ({ title: `HN: ${a.hn_number || '-' } - วันที่: ${formatDate(a.appointment_date)}`, value: a.id }))"
-                label="เลือกนัดหมาย"
-                item-title="title"
-                item-value="value"
-                outlined
-              />
-            </v-card-text>
-            <v-card-actions>
-              <v-spacer />
-              <v-btn text @click="exportDialog = false">ยกเลิก</v-btn>
-              <v-btn color="#3B5F6D" dark @click="exportAppointmentPDF" :disabled="!selectedAppointmentId">
-                <v-icon left>mdi-printer</v-icon> ส่งออก
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
       </v-container>
     </v-main>
   </v-app>
@@ -250,36 +189,24 @@
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import Chart from 'chart.js/auto';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
-const API_PATIENT = import.meta.env.VITE_API_PATIENT;
 const API_APPOINTMENTS = import.meta.env.VITE_API_APPOINTMENTS;
+const API_PATIENT = import.meta.env.VITE_API_PATIENT;
 
 export default {
-  name: 'PatientAppointments',
   data() {
     return {
       drawer: false,
       patientName: 'กำลังโหลด...',
-      appointmentHistory: [],
-      newAppointment: {
-        hn_number: null,
-        rights: null,
-        reason: null,
-        appointed_by: null,
-        contact_location: null,
-        other_details: null,
-        diagnosis: null,
-        status: 'รอนัด',
-      },
       patientId: null,
+      appointmentHistory: [],
+      newAppointment: { hn_number: null, rights: null, reason: '', appointed_by: '', contact_location: '', other_details: '', diagnosis: '', status: 'รอนัด' },
       datePicker: new Date().toISOString().substr(0, 10),
       timePicker: new Date().toTimeString().substr(0, 5),
       timeMenu: false,
-      valid: false,
       loading: false,
       loadingData: false,
+      valid: false,
       statusOptions: ['มาตามนัด', 'ไม่มาตามนัด', 'ส่งต่อรักษา', 'รอนัด'],
       headers: [
         { text: 'วันที่/เวลา', value: 'appointment_datetime' },
@@ -294,255 +221,84 @@ export default {
         { text: 'Actions', value: 'actions', sortable: false },
       ],
       chartInstance: null,
-      chartColors: {
-        'มาตามนัด': '#4CAF50',
-        'ไม่มาตามนัด': '#F44336',
-        'ส่งต่อรักษา': '#2196F3',
-        'รอนัด': '#FF9800',
-      },
-      exportDialog: false,
-      selectedAppointmentId: null,
+      chartColors: { 'มาตามนัด':'#4CAF50','ไม่มาตามนัด':'#F44336','ส่งต่อรักษา':'#2196F3','รอนัด':'#FF9800' },
     };
   },
   mounted() {
-    this.patientId = this.$route.query.patientId || null;
+    this.patientId = this.$route.query.patientId;
     if (this.patientId) {
-      this.fetchPatientDetails(this.patientId);
-      this.fetchAppointments(this.patientId);
-    } else {
-      this.patientName = 'ไม่พบผู้ป่วย';
+      this.fetchPatientDetails();
+      this.fetchAppointments();
     }
   },
-  watch: {
-    '$route.query.patientId'(newId) {
-      this.patientId = newId || null;
-      if (this.patientId) {
-        this.fetchPatientDetails(this.patientId);
-        this.fetchAppointments(this.patientId);
-      } else {
-        this.patientName = 'ไม่พบผู้ป่วย';
-        this.appointmentHistory = [];
-        if (this.chartInstance) {
-          this.chartInstance.destroy();
-          this.chartInstance = null;
-        }
-      }
-    },
-  },
   methods: {
-    async fetchPatientDetails(id) {
+    async fetchPatientDetails() {
       try {
-        const token = localStorage.getItem('userToken');
-        const headers = token ? { 'x-auth-token': token } : {};
-        const response = await axios.get(`${API_PATIENT}${id}`, { headers });
-        this.patientName = response.data.name || response.data.patient?.name || 'ไม่พบชื่อผู้ป่วย';
-      } catch (error) {
-        console.error('Failed to load patient name:', error.response?.data || error.message);
+        const res = await axios.get(`${API_PATIENT}${this.patientId}`);
+        this.patientName = res.data.patient?.name || res.data.name || 'ไม่พบชื่อผู้ป่วย';
+      } catch (err) {
+        console.error(err);
         this.patientName = 'ไม่พบผู้ป่วย';
-        await Swal.fire({
-          title: 'เกิดข้อผิดพลาด',
-          text: 'ไม่สามารถโหลดข้อมูลผู้ป่วยได้',
-          icon: 'error',
-          confirmButtonColor: '#d33'
-        });
-        if (error.response?.status === 401) this.logout();
       }
     },
-
-    async fetchAppointments(id) {
+    async fetchAppointments() {
       this.loadingData = true;
       try {
-        const token = localStorage.getItem('userToken');
-        const headers = token ? { 'x-auth-token': token } : {};
-        const response = await axios.get(`${API_APPOINTMENTS}patient/${id}`, { headers });
-        this.appointmentHistory = response.data; // ใช้ API ใหม่
+        const res = await axios.get(`${API_APPOINTMENTS}patient/${this.patientId}`);
+        this.appointmentHistory = res.data;
         this.$nextTick(() => this.updateChart());
-      } catch (error) {
-        console.error('Failed to load appointment history:', error.response?.data || error.message);
+      } catch (err) {
+        console.error(err);
         this.appointmentHistory = [];
-        if (this.chartInstance) this.chartInstance.destroy();
-        await Swal.fire({
-          title: 'เกิดข้อผิดพลาด',
-          text: 'ไม่สามารถโหลดข้อมูลการนัดหมายได้',
-          icon: 'error',
-          confirmButtonColor: '#d33'
-        });
-        if (error.response?.status === 401) this.logout();
-      } finally {
-        this.loadingData = false;
-      }
+      } finally { this.loadingData = false; }
     },
-
     async addAppointment() {
-      if (!this.patientId) {
-        await Swal.fire({
-          title: 'คำเตือน',
-          text: 'ไม่พบ patientId กรุณาเลือกผู้ป่วย',
-          icon: 'warning',
-          confirmButtonColor: '#3085d6'
-        });
-        return;
-      }
-      if (!this.$refs.appointmentForm.validate()) return;
-
-      const payload = {
-        patient_id: this.patientId,
-        hn_number: this.newAppointment.hn_number,
-        rights: this.newAppointment.rights,
-        appointment_date: this.datePicker,
-        appointment_time: this.timePicker,
-        reason: this.newAppointment.reason,
-        appointed_by: this.newAppointment.appointed_by,
-        contact_location: this.newAppointment.contact_location,
-        other_details: this.newAppointment.other_details,
-        diagnosis: this.newAppointment.diagnosis,
-        status: this.newAppointment.status,
-      };
-
+      if (!this.patientId) return;
       this.loading = true;
       try {
-        const token = localStorage.getItem('userToken');
-        const headers = token ? { 'x-auth-token': token } : {};
-        await axios.post(`${API_APPOINTMENTS}`, payload, { headers });
-        await Swal.fire({
-          title: 'บันทึกสำเร็จ',
-          text: 'บันทึกการนัดหมายเรียบร้อยแล้ว',
-          icon: 'success',
-          confirmButtonColor: '#4CAF50'
-        });
-        this.resetNewAppointmentForm();
-        this.fetchAppointments(this.patientId);
-      } catch (error) {
-        console.error('Failed to add appointment:', error.response?.data || error.message);
-        await Swal.fire({
-          title: 'เกิดข้อผิดพลาด',
-          text: 'ไม่สามารถบันทึกการนัดหมายได้',
-          icon: 'error',
-          confirmButtonColor: '#d33'
-        });
-      } finally {
-        this.loading = false;
-      }
+        await axios.post(`${API_APPOINTMENTS}`, { ...this.newAppointment, patient_id: this.patientId, appointment_date: this.datePicker, appointment_time: this.timePicker });
+        Swal.fire('สำเร็จ','บันทึกการนัดหมายเรียบร้อย','success');
+        this.newAppointment = { hn_number: null, rights: null, reason: '', appointed_by: '', contact_location: '', other_details: '', diagnosis: '', status: 'รอนัด' };
+        this.datePicker = new Date().toISOString().substr(0,10);
+        this.timePicker = new Date().toTimeString().substr(0,5);
+        this.fetchAppointments();
+      } catch (err) {
+        console.error(err);
+        Swal.fire('ผิดพลาด','ไม่สามารถบันทึกการนัดหมายได้','error');
+      } finally { this.loading = false; }
     },
-
     async deleteAppointment(id) {
-      const result = await Swal.fire({
-        title: 'ยืนยันการลบ',
-        text: 'คุณต้องการลบการนัดหมายนี้ใช่หรือไม่?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'ใช่, ลบการนัดหมาย',
-        cancelButtonText: 'ยกเลิก'
-      });
-
+      const result = await Swal.fire({ title:'ยืนยัน', text:'ต้องการลบใช่หรือไม่?', icon:'warning', showCancelButton:true, confirmButtonText:'ใช่', cancelButtonText:'ยกเลิก' });
       if (result.isConfirmed) {
         try {
-          const token = localStorage.getItem('userToken');
-          const headers = token ? { 'x-auth-token': token } : {};
-          await axios.delete(`${API_APPOINTMENTS}${id}`, { headers });
-          await Swal.fire({
-            title: 'ลบสำเร็จ',
-            text: 'ลบการนัดหมายเรียบร้อยแล้ว',
-            icon: 'success',
-            confirmButtonColor: '#4CAF50'
-          });
-          this.fetchAppointments(this.patientId);
-        } catch (error) {
-          console.error('Failed to delete appointment:', error);
-          await Swal.fire({
-            title: 'เกิดข้อผิดพลาด',
-            text: 'ไม่สามารถลบการนัดหมายได้',
-            icon: 'error',
-            confirmButtonColor: '#d33'
-          });
+          await axios.delete(`${API_APPOINTMENTS}${id}`);
+          Swal.fire('สำเร็จ','ลบเรียบร้อย','success');
+          this.fetchAppointments();
+        } catch (err) {
+          console.error(err);
+          Swal.fire('ผิดพลาด','ไม่สามารถลบได้','error');
         }
       }
     },
-
-    resetNewAppointmentForm() {
-      this.newAppointment = {
-        hn_number: null,
-        rights: null,
-        reason: null,
-        appointed_by: null,
-        contact_location: null,
-        other_details: null,
-        diagnosis: null,
-        status: 'รอนัด',
-      };
-      this.datePicker = new Date().toISOString().substr(0, 10);
-      this.timePicker = new Date().toTimeString().substr(0, 5);
-      this.$refs.appointmentForm.resetValidation();
-    },
-
-    formatDateTime(date, time) {
-      if (!date) return '-';
-      const d = new Date(`${date}T${time || '00:00'}`);
+    formatDateTime(date,time){
+      if(!date) return '-';
+      const d = new Date(`${date}T${time||'00:00'}`);
       return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
     },
-
-    formatDate(date) {
-      if (!date) return '-';
-      const d = new Date(date);
-      return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`;
+    getStatusColor(status){ return this.chartColors[status] || '#000'; },
+    updateChart(){
+      if(!this.appointmentHistory.length) return;
+      const counts = {}; this.statusOptions.forEach(s=>counts[s]=0);
+      this.appointmentHistory.forEach(a=>{ if(counts[a.status]!==undefined) counts[a.status]++; });
+      const data={ labels:this.statusOptions, datasets:[{ label:'สถานะการนัดหมาย', data:this.statusOptions.map(s=>counts[s]), backgroundColor:this.statusOptions.map(s=>this.chartColors[s]) }] };
+      if(this.chartInstance) this.chartInstance.destroy();
+      const ctx=document.getElementById('appointmentChart').getContext('2d');
+      this.chartInstance=new Chart(ctx,{ type:'bar', data });
     },
-
-    getStatusColor(status) {
-      return this.chartColors[status] || '#000000';
-    },
-
-    updateChart() {
-      if (!this.appointmentHistory.length) return;
-      const counts = {};
-      this.statusOptions.forEach(s => counts[s] = 0);
-      this.appointmentHistory.forEach(a => {
-        if (counts[a.status] !== undefined) counts[a.status]++;
-      });
-
-      const data = {
-        labels: this.statusOptions,
-        datasets: [{
-          label: 'สถานะการนัดหมาย',
-          data: this.statusOptions.map(s => counts[s]),
-          backgroundColor: this.statusOptions.map(s => this.chartColors[s])
-        }]
-      };
-
-      if (this.chartInstance) this.chartInstance.destroy();
-      const ctx = document.getElementById('appointmentChart').getContext('2d');
-      this.chartInstance = new Chart(ctx, { type: 'bar', data });
-    },
-
-    exportAppointmentPDF() {
-      const element = document.getElementById('appointmentTable') || document.body;
-      html2canvas(element).then(canvas => {
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF();
-        const imgProps = pdf.getImageProperties(imgData);
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save('appointments.pdf');
-        this.exportDialog = false;
-      });
-    },
-
-    openExportDialog() {
-      this.selectedAppointmentId = null;
-      this.exportDialog = true;
-    },
-
-    logout() {
-      localStorage.removeItem('userToken');
-      this.$router.push('/login');
-    },
-
-    goToUserPage() { this.$router.push('/user'); },
-    goToAddPatient() { this.$router.push('/add-patient'); },
-    goToPatientInfo() { this.$router.push('/patients'); },
-    goToMapPage() { this.$router.push('/map'); }
+    goToUserPage(){ this.$router.push('/user'); },
+    goToAddPatient(){ this.$router.push('/add-patient'); },
+    goToPatientInfo(){ this.$router.push('/patients'); },
+    goToMapPage(){ this.$router.push('/map'); }
   }
 };
 </script>
