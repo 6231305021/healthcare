@@ -1,8 +1,33 @@
 <template>
   <v-app>
+    <div class="background-image"></div>
+    <v-app-bar app color="#3B5F6D" dark elevation="4">
+      <v-btn icon @click="$router.back()">
+        <v-icon>mdi-arrow-left</v-icon>
+      </v-btn>
+      <v-toolbar-title class="font-weight-bold ml-2">
+        <v-icon left>mdi-account-group</v-icon>
+        ข้อมูลผู้ป่วย
+      </v-toolbar-title>
+      <v-spacer></v-spacer>
+      <div class="d-none d-md-flex">
+        <v-btn text @click="goToMap">
+          <v-icon left>mdi-map-marker-multiple</v-icon>
+          แผนที่
+        </v-btn>
+        <v-btn text @click="goToAddPatient">
+          <v-icon left>mdi-account-plus</v-icon>
+          เพิ่มผู้ป่วยใหม่
+        </v-btn>
+        <v-btn text @click="goToHomePage">
+          <v-icon left>mdi-logout</v-icon>
+          ออกจากระบบ
+        </v-btn>
+      </div>
+    </v-app-bar>
+
     <v-main>
       <v-container fluid>
-        <!-- ช่องค้นหา -->
         <v-text-field
           v-model="search"
           label="ค้นหาผู้ป่วย"
@@ -11,7 +36,6 @@
           class="my-4"
         ></v-text-field>
 
-        <!-- Loading skeleton -->
         <v-skeleton-loader
           v-if="loading"
           type="image"
@@ -19,12 +43,10 @@
           max-width="150"
         ></v-skeleton-loader>
 
-        <!-- Error message -->
         <v-alert v-if="error" type="error" class="my-4">
           {{ error }}
         </v-alert>
 
-        <!-- Grid ผู้ป่วย -->
         <v-row v-if="!loading && filteredPatients.length" dense>
           <v-col
             v-for="patient in filteredPatients"
@@ -63,12 +85,14 @@
                 <v-btn icon @click="goToDailyTracking(patient.id)">
                   <v-icon color="blue">mdi-calendar-check</v-icon>
                 </v-btn>
+                <v-btn icon @click="goToAddAppointment(patient.id)">
+                  <v-icon color="indigo">mdi-calendar-plus</v-icon>
+                </v-btn>
               </v-card-actions>
             </v-card>
           </v-col>
         </v-row>
 
-        <!-- ข้อความเมื่อไม่พบข้อมูล -->
         <v-alert v-else-if="!loading && !filteredPatients.length" type="info" class="my-4">
           ไม่พบข้อมูลผู้ป่วย
         </v-alert>
@@ -119,7 +143,15 @@ export default {
         const headers = token ? { 'x-auth-token': token } : {};
         const response = await axios.get(`${import.meta.env.VITE_API_PATIENT}`, { headers });
         if (Array.isArray(response.data.patients)) {
-          this.patients = response.data.patients;
+          // แก้ไขโค้ดส่วนนี้เพื่อสร้าง URL รูปภาพที่สมบูรณ์
+          this.patients = response.data.patients.map(patient => {
+            const apiBaseUrl = import.meta.env.VITE_API_URL.replace('/auth', '');
+            const avatarUrl = patient.image_path ? `${apiBaseUrl}/${patient.image_path}` : this.defaultImage;
+            return {
+              ...patient,
+              avatar: avatarUrl
+            };
+          });
         } else {
           this.patients = [];
           console.error('ข้อมูลไม่ถูกต้อง:', response.data);
@@ -153,6 +185,9 @@ export default {
       if (result.isConfirmed) {
         this.$router.push(`/daily-tracking?patientId=${id}`);
       }
+    },
+    goToAddAppointment(patientId) {
+      this.$router.push({ name: 'addAppointment', params: { patientId: patientId } });
     },
     async deletePatient(id) {
       const result = await showDeleteConfirm(
@@ -200,5 +235,18 @@ export default {
 /* ลดขนาดรูปเล็กลงให้สมดุลกับ card */
 .v-img {
   border-radius: 8px;
+}
+
+.background-image {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-image: url('/backgroundvue.png');
+  background-size: cover;
+  background-position: center center;
+  filter: blur(6px);
+  z-index: -1;
 }
 </style>

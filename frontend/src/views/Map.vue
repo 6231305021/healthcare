@@ -27,10 +27,10 @@
     </v-navigation-drawer>
 
     <v-main>
-      <v-container class="map-container" fluid>
-        <v-row justify="center">
-          <v-col cols="12" md="12" lg="12">
-            <v-card elevation="12" class="map-card pa-4">
+      <v-container fluid class="map-container fill-height">
+        <v-row justify="center" class="fill-height">
+          <v-col cols="12" md="12" lg="12" class="d-flex flex-column fill-height">
+            <v-card elevation="12" class="map-card pa-4 d-flex flex-column fill-height">
               <v-card-title class="text-h4 font-weight-bold mb-4 text-center d-flex justify-space-between align-center">
                 <div class="flex-grow-1 text-center">
                   <v-icon left color="#3B5F6D" size="36">mdi-map-marker-multiple</v-icon>
@@ -67,7 +67,7 @@
                 </v-row>
               </v-card-text>
 
-              <v-card-text>
+              <v-card-text class="flex-grow-1 pa-0">
                 <div id="map" class="map-content"></div>
               </v-card-text>
 
@@ -112,7 +112,7 @@ import Swal from 'sweetalert2'
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { showSuccessAlert, showErrorAlert, showWarningAlert } from '../utils/sweetAlert';
-import { getUsers, getPatients } from '../api.js'; // <-- เรียก API จาก api.js
+import { getUsers, getPatients } from '../api.js';
 
 export default {
   data() {
@@ -148,7 +148,7 @@ export default {
 
     async fetchUsers() {
       try {
-        const res = await getUsers(); // <-- เรียกจาก api.js
+        const res = await getUsers();
         this.users = res.data.users || [];
         this.mergeAllUsers();
         this.showAllUserLocations();
@@ -160,7 +160,7 @@ export default {
 
     async fetchPatients() {
       try {
-        const res = await getPatients(); // <-- เรียกจาก api.js
+        const res = await getPatients();
         this.patients = Array.isArray(res.data) ? res.data : res.data.patients || [];
         this.mergeAllUsers();
         this.showAllUserLocations();
@@ -208,17 +208,25 @@ export default {
     showAllUserLocations() {
       this.markers.forEach(m => m.remove());
       this.markers = [];
+      const apiBaseUrl = import.meta.env.VITE_API_URL.replace('/auth', '');
+      const defaultUserIcon = L.icon({ iconUrl:'https://cdn-icons-png.flaticon.com/512/149/149071.png', iconSize:[40,40], iconAnchor:[20,20], popupAnchor:[0,-20] });
+      
       this.allUsers.forEach(user => {
         if(user.latitude && user.longitude){
-          const icon = user.isPatient && user.image_path
-            ? L.icon({ iconUrl:`${import.meta.env.VITE_API_URL.replace('/auth','')}/${user.image_path}`, iconSize:[50,50], iconAnchor:[25,25], popupAnchor:[0,-25] })
-            : L.icon({ iconUrl:'https://cdn-icons-png.flaticon.com/512/149/149071.png', iconSize:[40,40], iconAnchor:[20,20], popupAnchor:[0,-20] });
+          // กำหนด icon ให้แตกต่างกันระหว่าง user ทั่วไปกับ patient
+          const iconUrl = user.isPatient && user.image_path ? `${apiBaseUrl}/${user.image_path}` : 'https://cdn-icons-png.flaticon.com/512/3237/3237497.png';
+          const icon = L.icon({ 
+            iconUrl: iconUrl, 
+            iconSize:[50,50], 
+            iconAnchor:[25,25], 
+            popupAnchor:[0,-25] 
+          });
 
-          const marker = L.marker([user.latitude, user.longitude], { icon });
+          const marker = L.marker([user.latitude, user.longitude], { icon: icon });
           const popupContent = `
             <div class="popup-content">
               <h3>${user.first_name} ${user.last_name}</h3>
-              ${user.isPatient && user.image_path ? `<img src="${import.meta.env.VITE_API_URL.replace('/auth','')}/${user.image_path}" alt="รูปผู้ป่วย">` : ''}
+              ${user.isPatient && user.image_path ? `<img src="${apiBaseUrl}/${user.image_path}" alt="รูปผู้ป่วย" class="popup-image">` : ''}
               <p><strong>ที่อยู่:</strong> ${user.address}</p>
               ${user.isPatient && user.community_health_worker ? `<p><strong>อสม.ที่รับผิดชอบ:</strong> ${user.community_health_worker}</p>` : ''}
             </div>`;
@@ -257,13 +265,29 @@ export default {
 </script>
 
 <style scoped>
-/* ยังคงสไตล์เดิมทั้งหมด */
 .background-image { position: fixed; top:0; left:0; width:100vw; height:100vh; background-image:url('/backgroundvue.png'); background-size:cover; background-position:center center; filter:blur(6px); }
-.map-container{ position:relative; z-index:1; padding:24px; }
-.map-card{ background-color:white; border-radius:15px; box-shadow:0 4px 6px rgba(0,0,0,0.1); }
-.map-content{ width:100%; height:calc(100vh-350px); min-height:600px; border-radius:12px; border:2px solid #92D7D0; overflow:hidden; margin-bottom:20px; }
-@media(max-width:768px){.map-content{height:calc(100vh-300px);min-height:400px;}}
-.search-field{background:rgba(255,255,255,0.9);border-radius:8px;}
-.search-btn{margin-left:8px;height:40px !important;}
-.coordinate-card{background:rgba(255,255,255,0.9)!important;border-radius:12px!important;margin-top:16px;}
+/* Change this line */
+.map-container { position:relative; z-index:1; padding:24px; }
+.map-card { background-color:white; border-radius:15px; box-shadow:0 4px 6px rgba(0,0,0,0.1); }
+/* Change this line */
+.map-content { width:100%; height:100%; border-radius:12px; border:2px solid #92D7D0; overflow:hidden; }
+.search-field { background:rgba(255,255,255,0.9); border-radius:8px; }
+.search-btn { margin-left:8px; height:40px !important; }
+.coordinate-card { background:rgba(255,255,255,0.9)!important; border-radius:12px!important; margin-top:16px; }
+
+@media(max-width:768px){
+  .map-content {
+    /* Use flexible height for mobile devices as well */
+    height: 100%;
+  }
+}
+/* เพิ่ม CSS สำหรับรูปภาพใน Pop-up */
+.popup-content img.popup-image {
+  max-width: 100px;
+  max-height: 100px;
+  display: block;
+  margin: 0 auto 10px;
+  border-radius: 50%;
+  border: 2px solid #3B5F6D;
+}
 </style>
