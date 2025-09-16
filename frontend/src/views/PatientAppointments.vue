@@ -1,5 +1,6 @@
 <template>
   <v-app>
+    <!-- App Bar -->
     <v-app-bar app color="#3B5F6D" dark>
       <v-app-bar-nav-icon @click="drawer = !drawer" class="d-md-none"></v-app-bar-nav-icon>
       <v-toolbar-title class="font-weight-bold">
@@ -27,43 +28,29 @@
       </div>
     </v-app-bar>
 
+    <!-- Navigation Drawer -->
     <v-navigation-drawer v-model="drawer" app temporary>
       <v-list>
         <v-list-item @click="goToUserPage">
-          <v-list-item-icon>
-            <v-icon>mdi-account</v-icon>
-          </v-list-item-icon>
-          <v-list-item-content>
-            <v-list-item-title>ข้อมูลส่วนตัว</v-list-item-title>
-          </v-list-item-content>
+          <v-list-item-icon><v-icon>mdi-account</v-icon></v-list-item-icon>
+          <v-list-item-content><v-list-item-title>ข้อมูลส่วนตัว</v-list-item-title></v-list-item-content>
         </v-list-item>
         <v-list-item @click="goToAddPatient">
-          <v-list-item-icon>
-            <v-icon>mdi-account-plus</v-icon>
-          </v-list-item-icon>
-          <v-list-item-content>
-            <v-list-item-title>เพิ่มผู้ป่วยใหม่</v-list-item-title>
-          </v-list-item-content>
+          <v-list-item-icon><v-icon>mdi-account-plus</v-icon></v-list-item-icon>
+          <v-list-item-content><v-list-item-title>เพิ่มผู้ป่วยใหม่</v-list-item-title></v-list-item-content>
         </v-list-item>
         <v-list-item @click="goToPatientInfo">
-          <v-list-item-icon>
-            <v-icon>mdi-account-group</v-icon>
-          </v-list-item-icon>
-          <v-list-item-content>
-            <v-list-item-title>ข้อมูลผู้ป่วย</v-list-item-title>
-          </v-list-item-content>
+          <v-list-item-icon><v-icon>mdi-account-group</v-icon></v-list-item-icon>
+          <v-list-item-content><v-list-item-title>ข้อมูลผู้ป่วย</v-list-item-title></v-list-item-content>
         </v-list-item>
         <v-list-item @click="goToMapPage">
-          <v-list-item-icon>
-            <v-icon>mdi-map-marker-multiple</v-icon>
-          </v-list-item-icon>
-          <v-list-item-content>
-            <v-list-item-title>แผนที่ผู้ป่วย</v-list-item-title>
-          </v-list-item-content>
+          <v-list-item-icon><v-icon>mdi-map-marker-multiple</v-icon></v-list-item-icon>
+          <v-list-item-content><v-list-item-title>แผนที่ผู้ป่วย</v-list-item-title></v-list-item-content>
         </v-list-item>
       </v-list>
     </v-navigation-drawer>
 
+    <!-- Main Content -->
     <v-main>
       <v-container class="mt-6">
         <v-row>
@@ -92,49 +79,46 @@
                         required
                       />
                     </v-col>
-
                     <v-col cols="12" sm="6" md="6">
-                        <v-text-field
-                            v-model="datePicker"
-                            label="วันที่นัดหมาย"
-                            prepend-icon="mdi-calendar"
-                            :rules="[v => !!v || 'กรุณาใส่วันที่นัดหมาย']"
+                      <v-text-field
+                        v-model="datePicker"
+                        label="วันที่นัดหมาย"
+                        prepend-icon="mdi-calendar"
+                        :rules="[v => !!v || 'กรุณาใส่วันที่นัดหมาย']"
+                        required
+                        outlined
+                        dense
+                        type="date"
+                      />
+                    </v-col>
+                    <v-col cols="12" sm="6" md="6">
+                      <v-menu
+                        v-model="timeMenu"
+                        :close-on-content-click="false"
+                        transition="scale-transition"
+                        offset-y
+                        min-width="290px"
+                      >
+                        <template v-slot:activator="{ on, attrs }">
+                          <v-text-field
+                            v-model="timePicker"
+                            label="เวลานัดหมาย"
+                            prepend-icon="mdi-clock"
+                            v-bind="attrs"
+                            :rules="[v => !!v || 'กรุณาใส่เวลานัดหมาย']"
                             required
                             outlined
                             dense
-                            type="date"  
+                            placeholder="HH:MM"
+                          />
+                        </template>
+                        <v-time-picker
+                          v-model="timePicker"
+                          format="24hr"
+                          @input="timeMenu = false"
                         />
+                      </v-menu>
                     </v-col>
-
-                    <v-col cols="12" sm="6" md="6">
-                        <v-menu
-                            v-model="timeMenu"
-                            :close-on-content-click="false"
-                            transition="scale-transition"
-                            offset-y
-                            min-width="290px"
-                        >
-                            <template v-slot:activator="{ on, attrs }">
-                            <v-text-field
-                                v-model="timePicker"
-                                label="เวลานัดหมาย"
-                                prepend-icon="mdi-clock"
-                                v-bind="attrs"
-                                :rules="[v => !!v || 'กรุณาใส่เวลานัดหมาย']"
-                                required
-                                outlined
-                                dense
-                                placeholder="HH:MM" 
-                            />
-                            </template>
-                            <v-time-picker
-                            v-model="timePicker"
-                            format="24hr"
-                            @input="timeMenu = false"
-                            />
-                        </v-menu>
-                    </v-col>
-
                     <v-col cols="12" md="6">
                       <v-text-field
                         v-model="newAppointment.reason"
@@ -225,20 +209,18 @@
             :loading="loadingData"
             class="elevation-1"
             item-key="id"
-            >
+          >
             <template v-slot:item.appointment_datetime="{ item }">
-                {{ formatDateTime(item.appointment_date, item.appointment_time) }}
+              {{ formatDateTime(item.appointment_date, item.appointment_time) }}
             </template>
             <template v-slot:item.status="{ item }">
-                <v-chip :color="getStatusColor(item.status)" dark>{{ item.status }}</v-chip>
+              <v-chip :color="getStatusColor(item.status)" dark>{{ item.status }}</v-chip>
             </template>
             <template v-slot:item.actions="{ item }">
-              <v-icon small @click="deleteAppointment(item.id)">
-                mdi-delete
-              </v-icon>
+              <v-icon small @click="deleteAppointment(item.id)">mdi-delete</v-icon>
             </template>
             <template v-slot:no-data>
-                ไม่มีข้อมูลการนัดหมายสำหรับผู้ป่วยนี้
+              ไม่มีข้อมูลการนัดหมายสำหรับผู้ป่วยนี้
             </template>
           </v-data-table>
         </v-card>
@@ -368,25 +350,18 @@ export default {
           icon: 'error',
           confirmButtonColor: '#d33',
         });
-        if (error.response?.status === 401) {
-          this.logout();
-        }
+        if (error.response?.status === 401) this.logout();
       }
     },
 
-    // ✅ แก้ตรงนี้ให้แน่ใจว่า appointmentHistory เป็น array
     async fetchAppointments(id) {
       this.loadingData = true;
       try {
         const token = localStorage.getItem('userToken');
         const headers = token ? { 'x-auth-token': token } : {};
         const response = await axios.get(`${import.meta.env.VITE_API_APPOINTMENTS}patient/${id}`, { headers });
-
         this.appointmentHistory = Array.isArray(response.data) ? response.data : [];
-
-        this.$nextTick(() => {
-          this.updateChart();
-        });
+        this.$nextTick(() => this.updateChart());
       } catch (error) {
         console.error('Failed to load appointment history:', error.response?.data || error.message);
         this.appointmentHistory = [];
@@ -400,9 +375,7 @@ export default {
           icon: 'error',
           confirmButtonColor: '#d33',
         });
-        if (error.response?.status === 401) {
-          this.logout();
-        }
+        if (error.response?.status === 401) this.logout();
       } finally {
         this.loadingData = false;
       }
@@ -513,14 +486,10 @@ export default {
     },
 
     updateChart() {
-      if (this.chartInstance) {
-        this.chartInstance.destroy();
-      }
+      if (this.chartInstance) this.chartInstance.destroy();
 
       const statusCounts = {};
-      this.appointmentHistory.forEach(a => {
-        statusCounts[a.status] = (statusCounts[a.status] || 0) + 1;
-      });
+      this.appointmentHistory.forEach(a => statusCounts[a.status] = (statusCounts[a.status] || 0) + 1);
 
       const data = {
         labels: Object.keys(statusCounts),
@@ -535,40 +504,23 @@ export default {
       this.chartInstance = new Chart(ctx, {
         type: 'bar',
         data,
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { display: false },
-          },
-        },
+        options: { responsive: true, plugins: { legend: { display: false } } },
       });
     },
 
-    getStatusColor(status) {
-      return this.chartColors[status] || 'grey';
-    },
-
+    getStatusColor(status) { return this.chartColors[status] || 'grey'; },
     formatDate(dateStr) {
       if (!dateStr) return '-';
       const d = new Date(dateStr);
       return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`;
     },
-
-    formatDateTime(dateStr, timeStr) {
-      return `${this.formatDate(dateStr)} ${timeStr || ''}`;
-    },
-
-    openExportDialog() {
-      this.exportDialog = true;
-      this.selectedAppointmentId = null;
-    },
+    formatDateTime(dateStr, timeStr) { return `${this.formatDate(dateStr)} ${timeStr || ''}`; },
+    openExportDialog() { this.exportDialog = true; this.selectedAppointmentId = null; },
 
     async exportAppointmentPDF() {
       if (!this.selectedAppointmentId) return;
-
       const appointment = this.appointmentHistory.find(a => a.id === this.selectedAppointmentId);
       if (!appointment) return;
-
       const doc = new jsPDF();
       doc.setFontSize(16);
       doc.text('ใบนัดผู้ป่วย', 14, 20);
@@ -582,16 +534,11 @@ export default {
       doc.text(`เหตุผลการนัดหมาย: ${appointment.reason || '-'}`, 14, 78);
       doc.text(`รายละเอียดอื่นๆ: ${appointment.other_details || '-'}`, 14, 86);
       doc.text(`สถานะ: ${appointment.status || '-'}`, 14, 94);
-
       doc.save(`Appointment_${appointment.hn_number || 'unknown'}.pdf`);
       this.exportDialog = false;
     },
 
-    logout() {
-      localStorage.removeItem('userToken');
-      this.$router.push('/login');
-    },
-
+    logout() { localStorage.removeItem('userToken'); this.$router.push('/login'); },
     goToUserPage() { this.$router.push('/user'); },
     goToAddPatient() { this.$router.push('/add-patient'); },
     goToPatientInfo() { this.$router.push('/patients'); },
@@ -601,7 +548,5 @@ export default {
 </script>
 
 <style scoped>
-.v-application {
-  background-color: #f5f5f5;
-}
+.v-application { background-color: #f5f5f5; }
 </style>
