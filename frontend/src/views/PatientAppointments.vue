@@ -104,9 +104,9 @@
                             dense
                             type="date"  
                         />
-                        </v-col>
+                    </v-col>
 
-                        <v-col cols="12" sm="6" md="6">
+                    <v-col cols="12" sm="6" md="6">
                         <v-menu
                             v-model="timeMenu"
                             :close-on-content-click="false"
@@ -133,7 +133,7 @@
                             @input="timeMenu = false"
                             />
                         </v-menu>
-                        </v-col>
+                    </v-col>
 
                     <v-col cols="12" md="6">
                       <v-text-field
@@ -210,7 +210,7 @@
           </v-col>
         </v-row>
 
-
+        <!-- Appointment History Table -->
         <v-card class="mt-6 pa-5">
           <v-card-title class="text-h6 d-flex justify-space-between align-center">
             <span>ประวัติการนัดหมาย</span>
@@ -233,10 +233,7 @@
                 <v-chip :color="getStatusColor(item.status)" dark>{{ item.status }}</v-chip>
             </template>
             <template v-slot:item.actions="{ item }">
-              <v-icon
-                small
-                @click="deleteAppointment(item.id)"
-              >
+              <v-icon small @click="deleteAppointment(item.id)">
                 mdi-delete
               </v-icon>
             </template>
@@ -245,7 +242,8 @@
             </template>
           </v-data-table>
         </v-card>
-        <!-- Dialog สำหรับเลือกนัดหมายที่จะส่งออก -->
+
+        <!-- Export Dialog -->
         <v-dialog v-model="exportDialog" max-width="600px">
           <v-card>
             <v-card-title class="text-h6">เลือกนัดหมายที่ต้องการส่งออกใบนัด</v-card-title>
@@ -279,7 +277,6 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 import Chart from 'chart.js/auto';
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 export default {
   name: 'PatientAppointments',
@@ -376,13 +373,17 @@ export default {
         }
       }
     },
+
+    // ✅ แก้ตรงนี้ให้แน่ใจว่า appointmentHistory เป็น array
     async fetchAppointments(id) {
       this.loadingData = true;
       try {
         const token = localStorage.getItem('userToken');
         const headers = token ? { 'x-auth-token': token } : {};
         const response = await axios.get(`${import.meta.env.VITE_API_APPOINTMENTS}patient/${id}`, { headers });
-        this.appointmentHistory = response.data;
+
+        this.appointmentHistory = Array.isArray(response.data) ? response.data : [];
+
         this.$nextTick(() => {
           this.updateChart();
         });
@@ -406,6 +407,7 @@ export default {
         this.loadingData = false;
       }
     },
+
     async addAppointment() {
       if (!this.patientId) {
         await Swal.fire({
@@ -457,6 +459,7 @@ export default {
         this.loading = false;
       }
     },
+
     async deleteAppointment(id) {
       const result = await Swal.fire({
         title: 'ยืนยันการลบ',
@@ -492,6 +495,7 @@ export default {
         }
       }
     },
+
     resetNewAppointmentForm() {
       this.newAppointment = {
         hn_number: null,
@@ -507,6 +511,7 @@ export default {
       this.timePicker = new Date().toTimeString().substr(0, 5);
       this.$refs.appointmentForm.resetValidation();
     },
+
     updateChart() {
       if (this.chartInstance) {
         this.chartInstance.destroy();
@@ -538,21 +543,26 @@ export default {
         },
       });
     },
+
     getStatusColor(status) {
       return this.chartColors[status] || 'grey';
     },
+
     formatDate(dateStr) {
       if (!dateStr) return '-';
       const d = new Date(dateStr);
       return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`;
     },
+
     formatDateTime(dateStr, timeStr) {
       return `${this.formatDate(dateStr)} ${timeStr || ''}`;
     },
+
     openExportDialog() {
       this.exportDialog = true;
       this.selectedAppointmentId = null;
     },
+
     async exportAppointmentPDF() {
       if (!this.selectedAppointmentId) return;
 
@@ -576,10 +586,12 @@ export default {
       doc.save(`Appointment_${appointment.hn_number || 'unknown'}.pdf`);
       this.exportDialog = false;
     },
+
     logout() {
       localStorage.removeItem('userToken');
       this.$router.push('/login');
     },
+
     goToUserPage() { this.$router.push('/user'); },
     goToAddPatient() { this.$router.push('/add-patient'); },
     goToPatientInfo() { this.$router.push('/patients'); },
