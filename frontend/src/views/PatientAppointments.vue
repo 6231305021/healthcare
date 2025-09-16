@@ -197,19 +197,12 @@
           <v-data-table
             :headers="headers"
             :items="appointmentHistory"
+            item-key="id"
             :loading="loadingData"
             class="elevation-1"
-            item-key="id"
-            id="appointmentTable"
           >
             <template v-slot:item.appointment_datetime="{ item }">
               {{ item.appointment_datetime }}
-            </template>
-            <template v-slot:item.hn_number="{ item }">
-              {{ item.hn_number || '-' }}
-            </template>
-            <template v-slot:item.rights="{ item }">
-              {{ item.rights || '-' }}
             </template>
             <template v-slot:item.status="{ item }">
               <v-chip :color="getStatusColor(item.status)" dark>{{ item.status }}</v-chip>
@@ -327,10 +320,8 @@ export default {
       } else {
         this.patientName = 'ไม่พบผู้ป่วย';
         this.appointmentHistory = [];
-        if (this.chartInstance) {
-          this.chartInstance.destroy();
-          this.chartInstance = null;
-        }
+        if (this.chartInstance) this.chartInstance.destroy();
+        this.chartInstance = null;
       }
     },
   },
@@ -360,11 +351,13 @@ export default {
         const token = localStorage.getItem('userToken');
         const headers = token ? { 'x-auth-token': token } : {};
         const response = await axios.get(`${API_APPOINTMENTS}patient/${id}`, { headers });
-        // map ข้อมูลให้ตรงกับ table headers
+
+        // map response ให้มี appointment_datetime
         this.appointmentHistory = response.data.map(item => ({
           ...item,
           appointment_datetime: this.formatDateTime(item.appointment_date, item.appointment_time)
         }));
+
         this.$nextTick(() => this.updateChart());
       } catch (error) {
         console.error('Failed to load appointment history:', error.response?.data || error.message);
