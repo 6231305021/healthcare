@@ -76,7 +76,6 @@
               </v-card-title>
 
               <v-form ref="form" v-model="valid" lazy-validation>
-                <!-- ข้อมูลส่วนตัว -->
                 <v-card flat class="pa-3 mb-4 rounded-lg" style="background: linear-gradient(to right, #ffffff, #f0f7ff); border: 1px solid #e3f2fd;">
                   <v-subheader class="font-weight-bold" style="color: #2980b9;">
                     <v-icon left color="#3498db">mdi-account</v-icon>
@@ -152,7 +151,6 @@
                   </v-row>
                 </v-card>
 
-                <!-- ข้อมูลการดูแล -->
                 <v-card flat class="pa-3 mb-4 rounded-lg" style="background: linear-gradient(to right, #ffffff, #f0fff4); border: 1px solid #e8f5e9;">
                   <v-subheader class="font-weight-bold" style="color: #27ae60;">
                     <v-icon left color="#2ecc71">mdi-medical-bag</v-icon>
@@ -184,7 +182,6 @@
                   </v-row>
                 </v-card>
 
-                <!-- รูปภาพผู้ป่วย -->
                 <v-card flat class="pa-3 mb-4 rounded-lg" style="background: linear-gradient(to right, #ffffff, #fff8e1); border: 1px solid #fff3e0;">
                   <v-subheader class="font-weight-bold" style="color: #f39c12;">
                     <v-icon left color="#f1c40f">mdi-camera</v-icon>
@@ -193,7 +190,7 @@
                   <v-row dense>
                     <v-col cols="12">
                       <v-file-input
-                        v-model="patientImageArray"
+                        v-model="patientImage"
                         accept="image/*"
                         label="อัพโหลดรูปภาพผู้ป่วย"
                         prepend-icon="mdi-camera"
@@ -216,7 +213,6 @@
                   </v-row>
                 </v-card>
 
-                <!-- ที่อยู่และพิกัด -->
                 <v-card flat class="pa-3 mb-4 rounded-lg" style="background: linear-gradient(to right, #ffffff, #f3e5f5); border: 1px solid #f3e5f5;">
                   <v-subheader class="font-weight-bold" style="color: #8e44ad;">
                     <v-icon left color="#9b59b6">mdi-map-marker</v-icon>
@@ -313,7 +309,6 @@
                   </v-row>
                 </v-card>
 
-                <!-- ปุ่มดำเนินการ -->
                 <v-card flat class="pa-3 rounded-lg" style="background: linear-gradient(to right, #ffffff, #e8eaf6); border: 1px solid #e8eaf6;">
                   <v-row dense>
                     <v-col cols="12" md="6">
@@ -367,6 +362,14 @@ import 'leaflet/dist/leaflet.css';
 import axios from 'axios';
 import { showSuccessAlert, showErrorAlert, showWarningAlert } from '../utils/sweetAlert';
 
+// แก้ปัญหาหมุดไม่แสดงผล
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+});
+
 const API_PATIENT = import.meta.env.VITE_API_PATIENT;
 
 export default {
@@ -392,7 +395,7 @@ export default {
       map: null,
       marker: null,
       genderOptions: ['ชาย', 'หญิง', 'อื่นๆ'],
-      patientImageArray: [], // <-- ใช้ array สำหรับ VFileInput Vuetify 3
+      patientImage: null, // แก้ไขให้เป็น null สำหรับ Vuetify 2
       imagePreview: null,
       snackbar: {
         show: false,
@@ -411,6 +414,10 @@ export default {
   },
   methods: {
     initMap() {
+      // ตรวจสอบว่า map ถูกสร้างไปแล้วหรือยัง
+      if (this.map) {
+        this.map.remove();
+      }
       this.map = L.map('map').setView([13.736717, 100.523186], 6);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors',
@@ -435,11 +442,14 @@ export default {
     },
 
     async searchLocation() {
-      if (!this.province && !this.district) {
-        showWarningAlert('กรุณากรอกจังหวัดหรืออำเภอเพื่อค้นหา');
+      if (!this.province && !this.district && !this.subdistrict) {
+        showWarningAlert('กรุณากรอกจังหวัด อำเภอ หรือตำบลเพื่อค้นหา');
         return;
       }
+      
       const query = `${this.subdistrict} ${this.district} ${this.province}`;
+      showWarningAlert(`กำลังค้นหาพิกัดของ ${query}`);
+
       try {
         const res = await axios.get(`https://nominatim.openstreetmap.org/search`, {
           params: {
@@ -447,6 +457,7 @@ export default {
             format: 'json',
             addressdetails: 1,
             limit: 1,
+            'accept-language': 'th-TH' // เพิ่มเพื่อให้ผลลัพธ์เป็นภาษาไทย
           },
         });
 
@@ -458,19 +469,19 @@ export default {
           this.longitude = parseFloat(lon).toFixed(6);
           showSuccessAlert(`พบพิกัดของ ${query}`);
         } else {
-          showWarningAlert('ไม่พบพิกัดที่ระบุ');
+          showWarningAlert('ไม่พบพิกัดที่ระบุ กรุณาตรวจสอบและลองใหม่อีกครั้ง');
         }
       } catch (error) {
         showErrorAlert('เกิดข้อผิดพลาดในการค้นหาพิกัด');
+        console.error('Geocoding error:', error);
       }
     },
 
-    previewImage(files) {
-      if (!files || !files.length) {
+    previewImage(file) {
+      if (!file) {
         this.imagePreview = null;
         return;
       }
-      const file = files[0];
       const reader = new FileReader();
       reader.onload = e => {
         this.imagePreview = e.target.result;
@@ -502,8 +513,8 @@ export default {
         formData.append('latitude', this.latitude);
         formData.append('longitude', this.longitude);
         
-        if (this.patientImageArray.length) {
-          formData.append('patientImage', this.patientImageArray[0]);
+        if (this.patientImage) {
+          formData.append('patientImage', this.patientImage);
         }
 
         const res = await axios.post(`${API_PATIENT}`, formData, {
@@ -565,6 +576,7 @@ export default {
   background-attachment: fixed;
   background-color: transparent;
   filter: blur(6px);
+  z-index: -1;
 }
 #map {
   width: 100%;

@@ -10,7 +10,6 @@
 
           <v-form ref="form" v-model="valid" lazy-validation>
             <v-row dense>
-              <!-- ส่วนข้อมูลส่วนตัว -->
               <v-col cols="12" md="6">
                 <v-card flat class="mb-3 pa-2 rounded-lg section-card">
                   <div class="text-subtitle-2 font-weight-bold mb-2 primary--text">
@@ -66,7 +65,6 @@
                 </v-card>
               </v-col>
 
-              <!-- ส่วนข้อมูลการเข้าสู่ระบบ -->
               <v-col cols="12" md="6">
                 <v-card flat class="mb-3 pa-2 rounded-lg section-card">
                   <div class="text-subtitle-2 font-weight-bold mb-2 primary--text">
@@ -128,7 +126,6 @@
               </v-col>
             </v-row>
 
-            <!-- ส่วนข้อมูลที่อยู่ -->
             <v-card flat class="mb-3 pa-2 rounded-lg section-card">
               <div class="text-subtitle-2 font-weight-bold mb-2 primary--text">
                 <v-icon left small>mdi-map-marker</v-icon>
@@ -228,7 +225,16 @@ import 'leaflet/dist/leaflet.css';
 import axios from 'axios';
 import { showSuccessAlert, showErrorAlert } from '../utils/sweetAlert';
 
-const API_URL = import.meta.env.VITE_API_URL; // ✅ ใช้ endpoint จาก .env
+// โค้ดที่ต้องเพิ่มเพื่อแก้ปัญหาหมุดไม่แสดง
+delete L.Icon.Default.prototype._getIconUrl;
+
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+});
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default {
   data() {
