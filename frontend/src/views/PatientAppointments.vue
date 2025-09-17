@@ -50,8 +50,8 @@
                         v-model="newAppointment.hn_number"
                         label="หมายเลข HN"
                         prepend-icon="mdi-identifier"
-                        :rules="[v => !!v || 'กรุณากรอกหมายเลข HN']"
-                        required
+                        readonly
+                        hide-details
                       />
                     </v-col>
                     <v-col cols="12" md="6">
@@ -59,8 +59,8 @@
                         v-model="newAppointment.rights"
                         label="สิทธิการรักษา"
                         prepend-icon="mdi-shield-account"
-                        :rules="[v => !!v || 'กรุณากรอกสิทธิการรักษา']"
-                        required
+                        readonly
+                        hide-details
                       />
                     </v-col>
                     <v-col cols="12" sm="6" md="6">
@@ -240,6 +240,9 @@
                     <strong>ชื่อผู้ป่วย:</strong> {{ patientName }}
                   </v-col>
                   <v-col cols="12" class="mb-2">
+                    <strong>สิทธิการรักษา:</strong> {{ selectedAppointmentDetails.rights || 'ไม่ได้ระบุ' }}
+                  </v-col>
+                  <v-col cols="12" class="mb-2">
                     <strong>วันที่/เวลานัดหมาย:</strong> {{ formatDateTime(selectedAppointmentDetails.appointment_date, selectedAppointmentDetails.appointment_time) }}
                   </v-col>
                   <v-col cols="12" class="mb-2">
@@ -292,7 +295,7 @@ export default {
         contact_location: null,
         other_details: null,
         diagnosis: null,
-        status: 'รอนัด', // กำหนดค่าเริ่มต้นเป็น 'รอนัด'
+        status: 'รอนัด',
       },
       datePicker: new Date().toISOString().substr(0, 10),
       timePicker: new Date().toTimeString().substr(0, 5),
@@ -320,8 +323,8 @@ export default {
         'ส่งต่อรักษา': '#2196F3',
         'รอนัด': '#FF9800',
       },
-      exportDialog: false, // Dialog สำหรับเลือกนัดหมาย
-      printDialog: false, // Dialog สำหรับแสดงตัวอย่างก่อนพิมพ์
+      exportDialog: false,
+      printDialog: false,
       selectedAppointmentId: null,
       selectedAppointmentDetails: {},
     };
@@ -393,7 +396,7 @@ export default {
 
         this.fetchAppointments(this.patientId);
         this.$refs.appointmentForm.reset();
-        this.newAppointment.hn_number = null; // แก้ไขให้ HN และ rights ไม่ถูกรีเซ็ต
+        this.newAppointment.hn_number = null;
         this.newAppointment.rights = null;
         this.newAppointment.status = 'รอนัด';
 
