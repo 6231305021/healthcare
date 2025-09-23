@@ -92,9 +92,9 @@
             class="elevation-1"
             :items-per-page="10"
             :footer-props="{
-                'items-per-page-text': 'รายการต่อหน้า',
-                'items-per-page-options': [5, 10, 25, 50, -1]
-            }"
+                  'items-per-page-text': 'รายการต่อหน้า',
+                  'items-per-page-options': [5, 10, 25, 50, -1]
+                }"
             no-data-text="ไม่พบประวัติการนัดหมายสำหรับผู้ป่วยนี้"
           >
             <template v-slot:item.appointment_date="{ item }">
@@ -103,8 +103,11 @@
             <template v-slot:item.appointment_time="{ item }">
               {{ item.appointment_time ? item.appointment_time.substring(0, 5) + ' น.' : 'N/A' }}
             </template>
-              <template v-slot:item.status="{ item }">
-                <v-chip :color="getStatusColor(item.status)" dark>{{ item.status }}</v-chip>
+            <template v-slot:item.rights="{ item }">
+              {{ item.rights || '-' }}
+            </template>
+            <template v-slot:item.status="{ item }">
+              <v-chip :color="getStatusColor(item.status)" dark>{{ item.status }}</v-chip>
             </template>
             <template v-slot:no-results>
               <v-alert :value="true" color="warning" icon="mdi-alert">
@@ -119,7 +122,6 @@
 </template>
 
 <script>
-// แก้ไข: ลบ axios ที่ไม่ได้ใช้งาน และนำเข้าฟังก์ชันที่ถูกต้องจาก api.js
 import Swal from 'sweetalert2'
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -129,7 +131,7 @@ export default {
   name: 'AppointmentHistory',
   props: {
     patientId: {
-      type: Number,
+      type: [Number, String], // Allow String as it comes from URL params
       required: true,
     },
   },
@@ -140,9 +142,11 @@ export default {
       allAppointments: [],
       loadingData: true,
       search: '',
+      // ▼▼▼ แก้ไข: เพิ่ม 'สิทธิการรักษา' ในหัวตาราง ▼▼▼
       headers: [
         { text: 'วันที่นัด', value: 'appointment_date' },
         { text: 'เวลานัด', value: 'appointment_time' },
+        { text: 'สิทธิการรักษา', value: 'rights' }, // <-- เพิ่มคอลัมน์นี้
         { text: 'สาเหตุ', value: 'reason' },
         { text: 'แพทย์ผู้นัด', value: 'appointed_by' },
         { text: 'สถานที่ติดต่อ', value: 'contact_location' },
@@ -150,6 +154,7 @@ export default {
         { text: 'วินิจฉัยโรค', value: 'diagnosis' },
         { text: 'สถานะ', value: 'status' },
       ],
+      // ▲▲▲ สิ้นสุดการแก้ไข ▲▲▲
     };
   },
   computed: {
@@ -175,9 +180,8 @@ export default {
   methods: {
     async fetchPatientDetails(id) {
       try {
-        // แก้ไข: ใช้ฟังก์ชัน getPatientById จาก api.js แทน axios
         const response = await getPatientById(id);
-        this.patientName = response.data.name;
+        this.patientName = response.data.patient?.name || response.data.name; // รองรับทั้งสองรูปแบบ
       } catch (error) {
         console.error('โหลดชื่อผู้ป่วยล้มเหลว:', error.response?.data || error.message);
         this.patientName = 'ไม่พบผู้ป่วย';
@@ -187,7 +191,6 @@ export default {
     async fetchAllAppointments(patientId) {
       this.loadingData = true;
       try {
-        // แก้ไข: ใช้ฟังก์ชัน getAppointmentsByPatientId จาก api.js แทน axios
         const response = await getAppointmentsByPatientId(patientId);
         this.allAppointments = response.data.filter(app => app.appointment_date);
         this.allAppointments.sort((a, b) => new Date(b.appointment_date) - new Date(a.appointment_date));
@@ -214,16 +217,33 @@ export default {
         }
     },
     goToUserPage() { this.$router.push('/profile'); },
-    logout() { localStorage.removeItem('userToken'); localStorage.removeItem('userData'); this.$router.push('/'); },
+    logout() { 
+        Swal.fire({
+            title: 'คุณแน่ใจหรือไม่?',
+            text: 'คุณต้องการออกจากระบบใช่หรือไม่',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'ใช่, ออกจากระบบ',
+            cancelButtonText: 'ยกเลิก',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                localStorage.removeItem('userToken'); 
+                localStorage.removeItem('userData'); 
+                this.$router.push('/'); 
+            }
+        });
+    },
     goToAddPatient() { this.$router.push('/Addpatient'); },
     goToPatientInfo() { this.$router.push('/patientinfo'); },
     goToMapPage() { this.$router.push('/Map'); },
     
     exportAppointmentsCSV() {
+      // ▼▼▼ แก้ไข: เพิ่ม 'สิทธิการรักษา' ใน CSV ▼▼▼
       const headers = this.headers.map(h => h.text);
       const rows = this.filteredAppointments.map(item => [
         item.appointment_date ? "'" + (new Date(item.appointment_date).toISOString().slice(0, 10)) + "'" : '',
         item.appointment_time ? item.appointment_time.substring(0, 5) + ' น.' : 'N/A',
+        item.rights || '-', // <-- เพิ่มข้อมูลนี้
         item.reason || '-',
         item.appointed_by || '-',
         item.contact_location || '-',
@@ -231,6 +251,7 @@ export default {
         item.diagnosis || '-',
         item.status || '-',
       ]);
+      // ▲▲▲ สิ้นสุดการแก้ไข ▲▲▲
       let csvContent = '';
       csvContent += '\uFEFF' + headers.join(',') + '\n';
       rows.forEach(row => {
@@ -240,7 +261,7 @@ export default {
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.setAttribute('download', 'appointment-history.csv');
+      link.setAttribute('download', `appointment-history-${this.patientName}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

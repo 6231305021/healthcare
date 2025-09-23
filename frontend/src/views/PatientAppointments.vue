@@ -17,22 +17,10 @@
 
     <v-navigation-drawer v-model="drawer" app temporary>
       <v-list>
-        <v-list-item @click="goToUserPage">
-          <v-list-item-icon><v-icon>mdi-account</v-icon></v-list-item-icon>
-          <v-list-item-content><v-list-item-title>ข้อมูลส่วนตัว</v-list-item-title></v-list-item-content>
-        </v-list-item>
-        <v-list-item @click="goToAddPatient">
-          <v-list-item-icon><v-icon>mdi-account-plus</v-icon></v-list-item-icon>
-          <v-list-item-content><v-list-item-title>เพิ่มผู้ป่วยใหม่</v-list-item-title></v-list-item-content>
-        </v-list-item>
-        <v-list-item @click="goToPatientInfo">
-          <v-list-item-icon><v-icon>mdi-account-group</v-icon></v-list-item-icon>
-          <v-list-item-content><v-list-item-title>ข้อมูลผู้ป่วย</v-list-item-title></v-list-item-content>
-        </v-list-item>
-        <v-list-item @click="goToMapPage">
-          <v-list-item-icon><v-icon>mdi-map-marker-multiple</v-icon></v-list-item-icon>
-          <v-list-item-content><v-list-item-title>แผนที่ผู้ป่วย</v-list-item-title></v-list-item-content>
-        </v-list-item>
+        <v-list-item @click="goToUserPage"><v-list-item-icon><v-icon>mdi-account</v-icon></v-list-item-icon><v-list-item-content><v-list-item-title>ข้อมูลส่วนตัว</v-list-item-title></v-list-item-content></v-list-item>
+        <v-list-item @click="goToAddPatient"><v-list-item-icon><v-icon>mdi-account-plus</v-icon></v-list-item-icon><v-list-item-content><v-list-item-title>เพิ่มผู้ป่วยใหม่</v-list-item-title></v-list-item-content></v-list-item>
+        <v-list-item @click="goToPatientInfo"><v-list-item-icon><v-icon>mdi-account-group</v-icon></v-list-item-icon><v-list-item-content><v-list-item-title>ข้อมูลผู้ป่วย</v-list-item-title></v-list-item-content></v-list-item>
+        <v-list-item @click="goToMapPage"><v-list-item-icon><v-icon>mdi-map-marker-multiple</v-icon></v-list-item-icon><v-list-item-content><v-list-item-title>แผนที่ผู้ป่วย</v-list-item-title></v-list-item-content></v-list-item>
       </v-list>
     </v-navigation-drawer>
 
@@ -46,84 +34,28 @@
                 <v-form ref="appointmentForm" v-model="valid" lazy-validation>
                   <v-row>
                     <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="newAppointment.hn_number"
-                        label="HN (Patient ID)"
-                        prepend-icon="mdi-identifier"
-                        readonly 
-                        outlined
-                        dense
-                      />
-                      </v-col>
+                      <v-text-field v-model="newAppointment.hn_number" label="HN (Patient ID)" prepend-icon="mdi-identifier" readonly outlined dense />
+                    </v-col>
                     <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="newAppointment.rights"
-                        label="สิทธิการรักษา"
-                        prepend-icon="mdi-shield-account"
-                        outlined
-                        dense
-                        clearable
-                      />
-                      </v-col>
-                    <v-col cols="12" sm="6" md="6">
-                      <v-text-field
-                        v-model="datePicker"
-                        label="วันที่นัดหมาย"
-                        prepend-icon="mdi-calendar"
-                        :rules="[v => !!v || 'กรุณาใส่วันที่นัดหมาย']"
-                        required
-                        outlined
-                        dense
-                        type="date"
-                      />
+                      <v-text-field v-model="newAppointment.rights" label="สิทธิการรักษา" prepend-icon="mdi-shield-account" outlined dense clearable />
                     </v-col>
                     <v-col cols="12" sm="6" md="6">
-                      <v-menu
-                        v-model="timeMenu"
-                        :close-on-content-click="false"
-                        transition="scale-transition"
-                        offset-y
-                        min-width="290px"
-                      >
+                      <v-text-field v-model="datePicker" label="วันที่นัดหมาย" prepend-icon="mdi-calendar" :rules="[v => !!v || 'กรุณาใส่วันที่นัดหมาย']" required outlined dense type="date" />
+                    </v-col>
+                    <v-col cols="12" sm="6" md="6">
+                      <v-menu v-model="timeMenu" :close-on-content-click="false" transition="scale-transition" offset-y min-width="290px">
                         <template v-slot:activator="{ on, attrs }">
-                          <v-text-field
-                            v-model="timePicker"
-                            label="เวลานัดหมาย"
-                            prepend-icon="mdi-clock"
-                            v-bind="attrs"
-                            v-on="on"
-                            :rules="[v => !!v || 'กรุณาใส่เวลานัดหมาย']"
-                            required
-                            outlined
-                            dense
-                            placeholder="HH:MM"
-                          />
+                          <v-text-field v-model="timePicker" label="เวลานัดหมาย" prepend-icon="mdi-clock" v-bind="attrs" v-on="on" :rules="[v => !!v || 'กรุณาใส่เวลานัดหมาย']" required outlined dense placeholder="HH:MM" />
                         </template>
-                        <v-time-picker
-                          v-model="timePicker"
-                          format="24hr"
-                          @input="timeMenu = false"
-                        />
+                        <v-time-picker v-model="timePicker" format="24hr" @input="timeMenu = false" />
                       </v-menu>
                     </v-col>
-                    <v-col cols="12" md="6">
-                      <v-text-field v-model="newAppointment.reason" label="เหตุผลการนัดหมาย" prepend-icon="mdi-text-box-outline" outlined dense />
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <v-text-field v-model="newAppointment.appointed_by" label="แพทย์ผู้นัด / ผู้บันทึกนัด" prepend-icon="mdi-medical-bag" outlined dense />
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <v-text-field v-model="newAppointment.contact_location" label="สถานที่ติดต่อ" prepend-icon="mdi-map-marker-radius" outlined dense />
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <v-text-field v-model="newAppointment.diagnosis" label="วินิจฉัย" prepend-icon="mdi-stethoscope" outlined dense />
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <v-text-field v-model="newAppointment.other_details" label="รายละเอียดอื่นๆ (เช่น LAB/X-Ray)" prepend-icon="mdi-note-text-outline" outlined dense />
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <v-select v-model="newAppointment.status" :items="statusOptions" label="สถานะการนัดหมาย" prepend-icon="mdi-check-circle-outline" :rules="[v => !!v || 'กรุณาเลือกสถานะ']" required outlined dense />
-                    </v-col>
+                    <v-col cols="12" md="6"> <v-text-field v-model="newAppointment.reason" label="เหตุผลการนัดหมาย" prepend-icon="mdi-text-box-outline" outlined dense /> </v-col>
+                    <v-col cols="12" md="6"> <v-text-field v-model="newAppointment.appointed_by" label="แพทย์ผู้นัด / ผู้บันทึกนัด" prepend-icon="mdi-medical-bag" outlined dense /> </v-col>
+                    <v-col cols="12" md="6"> <v-text-field v-model="newAppointment.contact_location" label="สถานที่ติดต่อ" prepend-icon="mdi-map-marker-radius" outlined dense /> </v-col>
+                    <v-col cols="12" md="6"> <v-text-field v-model="newAppointment.diagnosis" label="วินิจฉัย" prepend-icon="mdi-stethoscope" outlined dense /> </v-col>
+                    <v-col cols="12" md="6"> <v-text-field v-model="newAppointment.other_details" label="รายละเอียดอื่นๆ (เช่น LAB/X-Ray)" prepend-icon="mdi-note-text-outline" outlined dense /> </v-col>
+                    <v-col cols="12" md="6"> <v-select v-model="newAppointment.status" :items="statusOptions" label="สถานะการนัดหมาย" prepend-icon="mdi-check-circle-outline" :rules="[v => !!v || 'กรุณาเลือกสถานะ']" required outlined dense /> </v-col>
                   </v-row>
                 </v-form>
               </v-card-text>
@@ -162,32 +94,16 @@
                   {{ formatDateTime(item.appointment_date, item.appointment_time) }}
                 </template>
                 <template v-slot:item.rights="{ item }">
-                  {{ item.rights || 'ไม่ได้ระบุ' }}
+                  {{ currentPatientBenefits }}
                 </template>
-                <template v-slot:item.appointed_by="{ item }">
-                  {{ item.appointed_by || 'ไม่ได้ระบุ' }}
-                </template>
-                <template v-slot:item.contact_location="{ item }">
-                  {{ item.contact_location || 'ไม่ได้ระบุ' }}
-                </template>
-                <template v-slot:item.diagnosis="{ item }">
-                  {{ item.diagnosis || 'ไม่ได้ระบุ' }}
-                </template>
-                <template v-slot:item.reason="{ item }">
-                  {{ item.reason || 'ไม่ได้ระบุ' }}
-                </template>
-                <template v-slot:item.other_details="{ item }">
-                  {{ item.other_details || 'ไม่ได้ระบุ' }}
-                </template>
-                <template v-slot:item.status="{ item }">
-                  <v-chip :color="getStatusColor(item.status)" dark>{{ item.status || 'ไม่ได้ระบุ' }}</v-chip>
-                </template>
-                <template v-slot:item.actions="{ item }">
-                  <v-icon small @click="deleteAppointment(item.id)">mdi-delete</v-icon>
-                </template>
-                <template v-slot:no-data>
-                  ไม่มีข้อมูลการนัดหมายสำหรับผู้ป่วยนี้
-                </template>
+                <template v-slot:item.appointed_by="{ item }"> {{ item.appointed_by || 'ไม่ได้ระบุ' }} </template>
+                <template v-slot:item.contact_location="{ item }"> {{ item.contact_location || 'ไม่ได้ระบุ' }} </template>
+                <template v-slot:item.diagnosis="{ item }"> {{ item.diagnosis || 'ไม่ได้ระบุ' }} </template>
+                <template v-slot:item.reason="{ item }"> {{ item.reason || 'ไม่ได้ระบุ' }} </template>
+                <template v-slot:item.other_details="{ item }"> {{ item.other_details || 'ไม่ได้ระบุ' }} </template>
+                <template v-slot:item.status="{ item }"> <v-chip :color="getStatusColor(item.status)" dark>{{ item.status || 'ไม่ได้ระบุ' }}</v-chip> </template>
+                <template v-slot:item.actions="{ item }"> <v-icon small @click="deleteAppointment(item.id)">mdi-delete</v-icon> </template>
+                <template v-slot:no-data> ไม่มีข้อมูลการนัดหมายสำหรับผู้ป่วยนี้ </template>
               </v-data-table>
             </v-card>
           </v-col>
@@ -197,14 +113,7 @@
           <v-card>
             <v-card-title class="text-h6">เลือกนัดหมายที่ต้องการส่งออกใบนัด</v-card-title>
             <v-card-text>
-              <v-select
-                v-model="selectedAppointmentId"
-                :items="appointmentHistory.map(a => ({ title: `ID: ${a.id} - วันที่: ${formatDate(a.appointment_date)}`, value: a.id }))"
-                label="เลือกนัดหมาย"
-                item-title="title"
-                item-value="value"
-                outlined
-              />
+              <v-select v-model="selectedAppointmentId" :items="appointmentHistory.map(a => ({ title: `ID: ${a.id} - วันที่: ${formatDate(a.appointment_date)}`, value: a.id }))" label="เลือกนัดหมาย" item-title="title" item-value="value" outlined />
             </v-card-text>
             <v-card-actions>
               <v-spacer />
@@ -219,50 +128,25 @@
         <v-dialog v-model="printDialog" fullscreen hide-overlay transition="dialog-bottom-transition">
           <v-card>
             <v-toolbar dense dark color="#3B5F6D" class="no-print">
-              <v-btn icon dark @click="printDialog = false">
-                <v-icon>mdi-close</v-icon>
-              </v-btn>
+              <v-btn icon dark @click="printDialog = false"> <v-icon>mdi-close</v-icon> </v-btn>
               <v-toolbar-title>ตัวอย่างใบนัด</v-toolbar-title>
               <v-spacer></v-spacer>
-              <v-btn color="white" dark class="mr-2 black--text" @click="printAppointment">
-                <v-icon left>mdi-printer</v-icon> พิมพ์ใบนัด
-              </v-btn>
+              <v-btn color="white" dark class="mr-2 black--text" @click="printAppointment"> <v-icon left>mdi-printer</v-icon> พิมพ์ใบนัด </v-btn>
             </v-toolbar>
-
             <v-card-text class="pa-10">
               <div id="print-content" class="pa-5">
                 <h1 class="text-h5 text-center mb-6">ใบนัดผู้ป่วย</h1>
                 <v-row no-gutters>
-                  <v-col cols="12" class="mb-2">
-                    <strong>HN:</strong> {{ newAppointment.hn_number }}
-                  </v-col>
-                  <v-col cols="12" class="mb-2">
-                    <strong>ชื่อผู้ป่วย:</strong> {{ patientName }}
-                  </v-col>
-                  <v-col cols="12" class="mb-2">
-                    <strong>สิทธิการรักษา:</strong> {{ selectedAppointmentDetails.rights || 'ไม่ได้ระบุ' }}
-                  </v-col>
-                  <v-col cols="12" class="mb-2">
-                    <strong>วันที่/เวลานัดหมาย:</strong> {{ formatDateTime(selectedAppointmentDetails.appointment_date, selectedAppointmentDetails.appointment_time) }}
-                  </v-col>
-                  <v-col cols="12" class="mb-2">
-                    <strong>แพทย์/ผู้บันทึก:</strong> {{ selectedAppointmentDetails.appointed_by || 'ไม่ได้ระบุ' }}
-                  </v-col>
-                  <v-col cols="12" class="mb-2">
-                    <strong>สถานที่ติดต่อ:</strong> {{ selectedAppointmentDetails.contact_location || 'ไม่ได้ระบุ' }}
-                  </v-col>
-                  <v-col cols="12" class="mb-2">
-                    <strong>วินิจฉัย:</strong> {{ selectedAppointmentDetails.diagnosis || 'ไม่ได้ระบุ' }}
-                  </v-col>
-                  <v-col cols="12" class="mb-2">
-                    <strong>เหตุผล:</strong> {{ selectedAppointmentDetails.reason || 'ไม่ได้ระบุ' }}
-                  </v-col>
-                  <v-col cols="12" class="mb-2">
-                    <strong>รายละเอียดอื่นๆ:</strong> {{ selectedAppointmentDetails.other_details || 'ไม่ได้ระบุ' }}
-                  </v-col>
-                  <v-col cols="12" class="mb-2">
-                    <strong>สถานะ:</strong> {{ selectedAppointmentDetails.status || 'ไม่ได้ระบุ' }}
-                  </v-col>
+                  <v-col cols="12" class="mb-2"> <strong>HN:</strong> {{ selectedAppointmentDetails.hn_number || newAppointment.hn_number }} </v-col>
+                  <v-col cols="12" class="mb-2"> <strong>ชื่อผู้ป่วย:</strong> {{ patientName }} </v-col>
+                  <v-col cols="12" class="mb-2"> <strong>สิทธิการรักษา:</strong> {{ currentPatientBenefits }} </v-col>
+                  <v-col cols="12" class="mb-2"> <strong>วันที่/เวลานัดหมาย:</strong> {{ formatDateTime(selectedAppointmentDetails.appointment_date, selectedAppointmentDetails.appointment_time) }} </v-col>
+                  <v-col cols="12" class="mb-2"> <strong>แพทย์/ผู้บันทึก:</strong> {{ selectedAppointmentDetails.appointed_by || 'ไม่ได้ระบุ' }} </v-col>
+                  <v-col cols="12" class="mb-2"> <strong>สถานที่ติดต่อ:</strong> {{ selectedAppointmentDetails.contact_location || 'ไม่ได้ระบุ' }} </v-col>
+                  <v-col cols="12" class="mb-2"> <strong>วินิจฉัย:</strong> {{ selectedAppointmentDetails.diagnosis || 'ไม่ได้ระบุ' }} </v-col>
+                  <v-col cols="12" class="mb-2"> <strong>เหตุผล:</strong> {{ selectedAppointmentDetails.reason || 'ไม่ได้ระบุ' }} </v-col>
+                  <v-col cols="12" class="mb-2"> <strong>รายละเอียดอื่นๆ:</strong> {{ selectedAppointmentDetails.other_details || 'ไม่ได้ระบุ' }} </v-col>
+                  <v-col cols="12" class="mb-2"> <strong>สถานะ:</strong> {{ selectedAppointmentDetails.status || 'ไม่ได้ระบุ' }} </v-col>
                 </v-row>
               </div>
             </v-card-text>
@@ -286,16 +170,8 @@ export default {
       drawer: false,
       patientName: 'กำลังโหลด...',
       appointmentHistory: [],
-      newAppointment: {
-        hn_number: null,
-        rights: null,
-        reason: null,
-        appointed_by: null,
-        contact_location: null,
-        other_details: null,
-        diagnosis: null,
-        status: 'รอนัด',
-      },
+      currentPatientBenefits: 'ไม่ได้ระบุ',
+      newAppointment: { hn_number: null, rights: null, reason: null, appointed_by: null, contact_location: null, other_details: null, diagnosis: null, status: 'รอนัด' },
       datePicker: new Date().toISOString().substr(0, 10),
       timePicker: new Date().toTimeString().substr(0, 5),
       timeMenu: false,
@@ -303,7 +179,6 @@ export default {
       loading: false,
       loadingData: false,
       statusOptions: ['มาตามนัด', 'ไม่มาตามนัด', 'ส่งต่อรักษา', 'รอนัด'],
-      // ▼▼▼ แก้ไข: เปลี่ยนหัวตาราง ▼▼▼
       headers: [
         { text: 'ID การนัดหมาย', value: 'id' },
         { text: 'สิทธิการรักษา', value: 'rights' },
@@ -316,14 +191,8 @@ export default {
         { text: 'สถานะ', value: 'status' },
         { text: 'Actions', value: 'actions', sortable: false },
       ],
-      // ▲▲▲ สิ้นสุดการแก้ไข ▲▲▲
       chartInstance: null,
-      chartColors: {
-        'มาตามนัด': '#4CAF50',
-        'ไม่มาตามนัด': '#F44336',
-        'ส่งต่อรักษา': '#2196F3',
-        'รอนัด': '#FF9800',
-      },
+      chartColors: { 'มาตามนัด': '#4CAF50', 'ไม่มาตามนัด': '#F44336', 'ส่งต่อรักษา': '#2196F3', 'รอนัด': '#FF9800' },
       exportDialog: false,
       printDialog: false,
       selectedAppointmentId: null,
@@ -356,10 +225,9 @@ export default {
         const res = await getPatientById(id);
         const patientData = res.data.patient || res.data;
         this.patientName = patientData.name || 'ไม่พบชื่อผู้ป่วย';
-        // ▼▼▼ แก้ไข: ดึง ID ของผู้ป่วยมาแสดงเป็น HN ▼▼▼
         this.newAppointment.hn_number = patientData.id;
-        // ▲▲▲ สิ้นสุดการแก้ไข ▲▲▲
-        this.newAppointment.rights = patientData.benefits || null; // ใช้ benefits จาก patient
+        this.newAppointment.rights = patientData.Benefits || null;
+        this.currentPatientBenefits = patientData.Benefits || 'ไม่ได้ระบุ';
       } catch (e) {
         console.error(e);
         this.patientName = 'ไม่พบผู้ป่วย';
@@ -376,7 +244,7 @@ export default {
       } catch (e) {
         console.error(e);
         this.appointmentHistory = [];
-        if (this.chartInstance) { this.chartInstance.destroy(); this.chartInstance = null; }
+        if (this.chartInstance) { this.chartInstance.destroy(); }
         await Swal.fire({ title: 'เกิดข้อผิดพลาด', text: 'ไม่สามารถโหลดข้อมูลการนัดหมายได้', icon: 'error', confirmButtonColor: '#d33' });
       } finally { this.loadingData = false; }
     },
@@ -396,46 +264,24 @@ export default {
         };
         await createAppointmentApi(appointmentData);
         await Swal.fire({ title: 'สำเร็จ!', text: 'เพิ่มการนัดหมายเรียบร้อยแล้ว', icon: 'success', confirmButtonColor: '#3B5F6D' });
-
+        
+        this.fetchPatientDetails(this.patientId || this.$route.params.patientId);
         this.fetchAppointments(this.patientId || this.$route.params.patientId);
+        
         this.$refs.appointmentForm.resetValidation();
-        // Reset form but keep HN and rights
         const hn = this.newAppointment.hn_number;
         const rights = this.newAppointment.rights;
-        this.newAppointment = {
-            hn_number: hn,
-            rights: rights,
-            reason: null,
-            appointed_by: null,
-            contact_location: null,
-            other_details: null,
-            diagnosis: null,
-            status: 'รอนัด',
-        };
+        this.newAppointment = { hn_number: hn, rights: rights, reason: null, appointed_by: null, contact_location: null, other_details: null, diagnosis: null, status: 'รอนัด' };
         this.datePicker = new Date().toISOString().substr(0, 10);
         this.timePicker = new Date().toTimeString().substr(0, 5);
-
-
       } catch (e) {
         console.error(e);
         await Swal.fire({ title: 'เกิดข้อผิดพลาด', text: 'ไม่สามารถเพิ่มการนัดหมายได้', icon: 'error', confirmButtonColor: '#d33' });
-      } finally {
-        this.loading = false;
-      }
+      } finally { this.loading = false; }
     },
 
     async deleteAppointment(appointmentId) {
-      const result = await Swal.fire({
-        title: 'คุณแน่ใจหรือไม่?',
-        text: 'ข้อมูลการนัดหมายนี้จะถูกลบอย่างถาวร!',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'ใช่, ลบเลย!',
-        cancelButtonText: 'ยกเลิก',
-      });
-
+      const result = await Swal.fire({ title: 'คุณแน่ใจหรือไม่?', text: 'ข้อมูลการนัดหมายนี้จะถูกลบอย่างถาวร!', icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'ใช่, ลบเลย!', cancelButtonText: 'ยกเลิก' });
       if (result.isConfirmed) {
         try {
           await deleteAppointmentApi(appointmentId);
@@ -467,13 +313,9 @@ export default {
       if (this.chartInstance) this.chartInstance.destroy();
       const ctx = document.getElementById('appointmentChart');
       if (!ctx) return;
-      
       const statusCounts = {};
       this.appointmentHistory.forEach(a => statusCounts[a.status] = (statusCounts[a.status] || 0) + 1);
-      const data = {
-        labels: Object.keys(statusCounts),
-        datasets: [{ label: 'จำนวนการนัดหมาย', data: Object.values(statusCounts), backgroundColor: Object.keys(statusCounts).map(s => this.chartColors[s] || '#9E9E9E') }],
-      };
+      const data = { labels: Object.keys(statusCounts), datasets: [{ label: 'จำนวนการนัดหมาย', data: Object.values(statusCounts), backgroundColor: Object.keys(statusCounts).map(s => this.chartColors[s] || '#9E9E9E') }], };
       this.chartInstance = new Chart(ctx, { type: 'bar', data, options: { responsive: true, plugins: { legend: { display: false } } } });
     },
 
@@ -502,39 +344,11 @@ export default {
 .v-application {
   background-color: #f5f5f5;
 }
-
-/* สไตล์สำหรับการพิมพ์เท่านั้น */
 @media print {
-  /* ซ่อนแถบเมนูด้านบนและด้านข้าง */
-  .v-app-bar,
-  .v-navigation-drawer,
-  .no-print {
-    display: none !important;
-  }
-  
-  /* กำหนดให้เนื้อหาที่จะพิมพ์เต็มหน้ากระดาษ */
-  .v-main {
-    padding: 0 !important;
-    margin: 0 !important;
-  }
-  
-  /* ทำให้เนื้อหาหลักอยู่กึ่งกลาง */
-  .v-container {
-    width: 100% !important;
-    max-width: none !important;
-    padding: 0 !important;
-  }
-  
-  .v-card {
-    box-shadow: none !important;
-    border: none !important;
-  }
-  
-  /* จัดตำแหน่งให้อยู่กลางหน้ากระดาษและลบขอบที่ไม่จำเป็น */
-  #print-content {
-    width: 100%;
-    margin-top: 50px;
-    padding: 0 !important;
-  }
+  .v-app-bar, .v-navigation-drawer, .no-print { display: none !important; }
+  .v-main { padding: 0 !important; margin: 0 !important; }
+  .v-container { width: 100% !important; max-width: none !important; padding: 0 !important; }
+  .v-card { box-shadow: none !important; border: none !important; }
+  #print-content { width: 100%; margin-top: 50px; padding: 0 !important; }
 }
 </style>
