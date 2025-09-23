@@ -48,21 +48,23 @@
                     <v-col cols="12" md="6">
                       <v-text-field
                         v-model="newAppointment.hn_number"
-                        label="หมายเลข HN"
+                        label="HN (Patient ID)"
                         prepend-icon="mdi-identifier"
-                        readonly
-                        hide-details
+                        readonly 
+                        outlined
+                        dense
                       />
-                    </v-col>
+                      </v-col>
                     <v-col cols="12" md="6">
                       <v-text-field
                         v-model="newAppointment.rights"
                         label="สิทธิการรักษา"
                         prepend-icon="mdi-shield-account"
-                        readonly
-                        hide-details
+                        outlined
+                        dense
+                        clearable
                       />
-                    </v-col>
+                      </v-col>
                     <v-col cols="12" sm="6" md="6">
                       <v-text-field
                         v-model="datePicker"
@@ -89,6 +91,7 @@
                             label="เวลานัดหมาย"
                             prepend-icon="mdi-clock"
                             v-bind="attrs"
+                            v-on="on"
                             :rules="[v => !!v || 'กรุณาใส่เวลานัดหมาย']"
                             required
                             outlined
@@ -104,22 +107,22 @@
                       </v-menu>
                     </v-col>
                     <v-col cols="12" md="6">
-                      <v-text-field v-model="newAppointment.reason" label="เหตุผลการนัดหมาย" prepend-icon="mdi-text-box-outline" />
+                      <v-text-field v-model="newAppointment.reason" label="เหตุผลการนัดหมาย" prepend-icon="mdi-text-box-outline" outlined dense />
                     </v-col>
                     <v-col cols="12" md="6">
-                      <v-text-field v-model="newAppointment.appointed_by" label="แพทย์ผู้นัด / ผู้บันทึกนัด" prepend-icon="mdi-medical-bag" />
+                      <v-text-field v-model="newAppointment.appointed_by" label="แพทย์ผู้นัด / ผู้บันทึกนัด" prepend-icon="mdi-medical-bag" outlined dense />
                     </v-col>
                     <v-col cols="12" md="6">
-                      <v-text-field v-model="newAppointment.contact_location" label="สถานที่ติดต่อ" prepend-icon="mdi-map-marker-radius" />
+                      <v-text-field v-model="newAppointment.contact_location" label="สถานที่ติดต่อ" prepend-icon="mdi-map-marker-radius" outlined dense />
                     </v-col>
                     <v-col cols="12" md="6">
-                      <v-text-field v-model="newAppointment.diagnosis" label="วินิจฉัย" prepend-icon="mdi-stethoscope" />
+                      <v-text-field v-model="newAppointment.diagnosis" label="วินิจฉัย" prepend-icon="mdi-stethoscope" outlined dense />
                     </v-col>
                     <v-col cols="12" md="6">
-                      <v-text-field v-model="newAppointment.other_details" label="รายละเอียดอื่นๆ (เช่น LAB/X-Ray)" prepend-icon="mdi-note-text-outline" />
+                      <v-text-field v-model="newAppointment.other_details" label="รายละเอียดอื่นๆ (เช่น LAB/X-Ray)" prepend-icon="mdi-note-text-outline" outlined dense />
                     </v-col>
                     <v-col cols="12" md="6">
-                      <v-select v-model="newAppointment.status" :items="statusOptions" label="สถานะการนัดหมาย" prepend-icon="mdi-check-circle-outline" :rules="[v => !!v || 'กรุณาเลือกสถานะ']" required />
+                      <v-select v-model="newAppointment.status" :items="statusOptions" label="สถานะการนัดหมาย" prepend-icon="mdi-check-circle-outline" :rules="[v => !!v || 'กรุณาเลือกสถานะ']" required outlined dense />
                     </v-col>
                   </v-row>
                 </v-form>
@@ -157,9 +160,6 @@
               >
                 <template v-slot:item.appointment_datetime="{ item }">
                   {{ formatDateTime(item.appointment_date, item.appointment_time) }}
-                </template>
-                <template v-slot:item.hn_number="{ item }">
-                  {{ item.hn_number || 'ไม่ได้ระบุ' }}
                 </template>
                 <template v-slot:item.rights="{ item }">
                   {{ item.rights || 'ไม่ได้ระบุ' }}
@@ -199,7 +199,7 @@
             <v-card-text>
               <v-select
                 v-model="selectedAppointmentId"
-                :items="appointmentHistory.map(a => ({ title: `HN: ${a.hn_number || '-' } - วันที่: ${formatDate(a.appointment_date)}`, value: a.id }))"
+                :items="appointmentHistory.map(a => ({ title: `ID: ${a.id} - วันที่: ${formatDate(a.appointment_date)}`, value: a.id }))"
                 label="เลือกนัดหมาย"
                 item-title="title"
                 item-value="value"
@@ -234,7 +234,7 @@
                 <h1 class="text-h5 text-center mb-6">ใบนัดผู้ป่วย</h1>
                 <v-row no-gutters>
                   <v-col cols="12" class="mb-2">
-                    <strong>HN:</strong> {{ selectedAppointmentDetails.hn_number || 'ไม่ได้ระบุ' }}
+                    <strong>HN:</strong> {{ newAppointment.hn_number }}
                   </v-col>
                   <v-col cols="12" class="mb-2">
                     <strong>ชื่อผู้ป่วย:</strong> {{ patientName }}
@@ -268,7 +268,6 @@
             </v-card-text>
           </v-card>
         </v-dialog>
-
       </v-container>
     </v-main>
   </v-app>
@@ -304,10 +303,11 @@ export default {
       loading: false,
       loadingData: false,
       statusOptions: ['มาตามนัด', 'ไม่มาตามนัด', 'ส่งต่อรักษา', 'รอนัด'],
+      // ▼▼▼ แก้ไข: เปลี่ยนหัวตาราง ▼▼▼
       headers: [
-        { text: 'วันที่/เวลา', value: 'appointment_datetime' },
-        { text: 'HN', value: 'hn_number' },
+        { text: 'ID การนัดหมาย', value: 'id' },
         { text: 'สิทธิการรักษา', value: 'rights' },
+        { text: 'วันที่/เวลา', value: 'appointment_datetime' },
         { text: 'เหตุผล', value: 'reason' },
         { text: 'แพทย์/ผู้บันทึก', value: 'appointed_by' },
         { text: 'สถานที่ติดต่อ', value: 'contact_location' },
@@ -316,6 +316,7 @@ export default {
         { text: 'สถานะ', value: 'status' },
         { text: 'Actions', value: 'actions', sortable: false },
       ],
+      // ▲▲▲ สิ้นสุดการแก้ไข ▲▲▲
       chartInstance: null,
       chartColors: {
         'มาตามนัด': '#4CAF50',
@@ -330,17 +331,17 @@ export default {
     };
   },
   mounted() {
-    if (this.patientId) {
-      this.fetchPatientDetails(this.patientId);
-      this.fetchAppointments(this.patientId);
+    const id = this.$route.params.patientId || this.patientId;
+    if (id) {
+      this.fetchPatientDetails(id);
+      this.fetchAppointments(id);
     }
   },
   watch: {
     '$route.params.patientId'(newId) {
       if (newId) {
-        this.patientId = newId;
-        this.fetchPatientDetails(this.patientId);
-        this.fetchAppointments(this.patientId);
+        this.fetchPatientDetails(newId);
+        this.fetchAppointments(newId);
       }
     },
   },
@@ -355,8 +356,10 @@ export default {
         const res = await getPatientById(id);
         const patientData = res.data.patient || res.data;
         this.patientName = patientData.name || 'ไม่พบชื่อผู้ป่วย';
-        this.newAppointment.hn_number = patientData.hn_number || null;
-        this.newAppointment.rights = patientData.rights || null;
+        // ▼▼▼ แก้ไข: ดึง ID ของผู้ป่วยมาแสดงเป็น HN ▼▼▼
+        this.newAppointment.hn_number = patientData.id;
+        // ▲▲▲ สิ้นสุดการแก้ไข ▲▲▲
+        this.newAppointment.rights = patientData.benefits || null; // ใช้ benefits จาก patient
       } catch (e) {
         console.error(e);
         this.patientName = 'ไม่พบผู้ป่วย';
@@ -387,18 +390,31 @@ export default {
       try {
         const appointmentData = {
           ...this.newAppointment,
-          patient_id: this.patientId,
+          patient_id: this.patientId || this.$route.params.patientId,
           appointment_date: this.datePicker,
           appointment_time: this.timePicker,
         };
         await createAppointmentApi(appointmentData);
         await Swal.fire({ title: 'สำเร็จ!', text: 'เพิ่มการนัดหมายเรียบร้อยแล้ว', icon: 'success', confirmButtonColor: '#3B5F6D' });
 
-        this.fetchAppointments(this.patientId);
-        this.$refs.appointmentForm.reset();
-        this.newAppointment.hn_number = null;
-        this.newAppointment.rights = null;
-        this.newAppointment.status = 'รอนัด';
+        this.fetchAppointments(this.patientId || this.$route.params.patientId);
+        this.$refs.appointmentForm.resetValidation();
+        // Reset form but keep HN and rights
+        const hn = this.newAppointment.hn_number;
+        const rights = this.newAppointment.rights;
+        this.newAppointment = {
+            hn_number: hn,
+            rights: rights,
+            reason: null,
+            appointed_by: null,
+            contact_location: null,
+            other_details: null,
+            diagnosis: null,
+            status: 'รอนัด',
+        };
+        this.datePicker = new Date().toISOString().substr(0, 10);
+        this.timePicker = new Date().toTimeString().substr(0, 5);
+
 
       } catch (e) {
         console.error(e);
@@ -424,7 +440,7 @@ export default {
         try {
           await deleteAppointmentApi(appointmentId);
           await Swal.fire({ title: 'ลบสำเร็จ!', text: 'ข้อมูลการนัดหมายถูกลบแล้ว', icon: 'success', confirmButtonColor: '#3B5F6D' });
-          this.fetchAppointments(this.patientId);
+          this.fetchAppointments(this.patientId || this.$route.params.patientId);
         } catch (e) {
           console.error(e);
           await Swal.fire({ title: 'ลบไม่สำเร็จ', text: 'เกิดข้อผิดพลาดในการลบข้อมูล', icon: 'error', confirmButtonColor: '#d33' });
@@ -449,13 +465,15 @@ export default {
 
     updateChart() {
       if (this.chartInstance) this.chartInstance.destroy();
+      const ctx = document.getElementById('appointmentChart');
+      if (!ctx) return;
+      
       const statusCounts = {};
       this.appointmentHistory.forEach(a => statusCounts[a.status] = (statusCounts[a.status] || 0) + 1);
       const data = {
         labels: Object.keys(statusCounts),
         datasets: [{ label: 'จำนวนการนัดหมาย', data: Object.values(statusCounts), backgroundColor: Object.keys(statusCounts).map(s => this.chartColors[s] || '#9E9E9E') }],
       };
-      const ctx = document.getElementById('appointmentChart').getContext('2d');
       this.chartInstance = new Chart(ctx, { type: 'bar', data, options: { responsive: true, plugins: { legend: { display: false } } } });
     },
 

@@ -146,29 +146,28 @@ export default {
     goToAddPatient() { this.$router.push('/Addpatient'); },
     goToPatientInfo() { this.$router.push('/patientinfo'); },
 
-    async fetchUsers() {
+    // ▼▼▼ แก้ไข: สร้างฟังก์ชันใหม่เพื่อจัดการการโหลดข้อมูลทั้งหมด ▼▼▼
+    async loadMapData() {
       try {
-        const res = await getUsers();
-        this.users = res.data.users || [];
-        this.mergeAllUsers();
-        this.showAllUserLocations();
-      } catch (error) {
-        console.error('Error fetching users:', error);
-        showErrorAlert('โหลดข้อมูลผู้ใช้ล้มเหลว');
-      }
-    },
+        // ดึงข้อมูลผู้ใช้และผู้ป่วยพร้อมกัน
+        const [userRes, patientRes] = await Promise.all([
+          getUsers(),
+          getPatients()
+        ]);
 
-    async fetchPatients() {
-      try {
-        const res = await getPatients();
-        this.patients = Array.isArray(res.data) ? res.data : res.data.patients || [];
+        // อัปเดตข้อมูลใน data() ด้วยข้อมูลใหม่ล่าสุด
+        this.users = userRes.data.users || [];
+        this.patients = Array.isArray(patientRes.data) ? patientRes.data : patientRes.data.patients || [];
+        
+        // หลังจากได้ข้อมูลครบแล้ว ค่อยทำการรวมและแสดงผลบนแผนที่
         this.mergeAllUsers();
-        this.showAllUserLocations();
+
       } catch (error) {
-        console.error('Error fetching patients:', error);
-        showErrorAlert('โหลดข้อมูลผู้ป่วยล้มเหลว');
+        console.error('Error fetching data for map:', error);
+        showErrorAlert('เกิดข้อผิดพลาดในการโหลดข้อมูลแผนที่');
       }
     },
+    // ▲▲▲ สิ้นสุดการแก้ไข ▲▲▲
 
     mergeAllUsers() {
       const formattedPatients = this.patients
@@ -184,7 +183,11 @@ export default {
           image_path: p.image_path,
           community_health_worker: p.community_health_worker
         }));
-      this.allUsers = [...this.users, ...formattedPatients];
+
+      this.allUsers = [...this.users.filter(u => u.latitude && u.longitude), ...formattedPatients];
+      
+      // เรียกฟังก์ชันแสดงหมุดหลังจากรวมข้อมูลเสร็จ
+      this.showAllUserLocations();
     },
 
     handleSearch() {
@@ -209,11 +212,13 @@ export default {
       this.markers.forEach(m => m.remove());
       this.markers = [];
       const apiBaseUrl = import.meta.env.VITE_API_URL.replace('/auth', '');
-      const defaultUserIcon = L.icon({ iconUrl:'https://cdn-icons-png.flaticon.com/512/149/149071.png', iconSize:[40,40], iconAnchor:[20,20], popupAnchor:[0,-20] });
       
       this.allUsers.forEach(user => {
         if(user.latitude && user.longitude){
-          const iconUrl = user.isPatient && user.image_path ? `${apiBaseUrl}/${user.image_path}` : 'https://cdn-icons-png.flaticon.com/512/3237/3237497.png';
+          const iconUrl = user.isPatient && user.image_path 
+            ? `${apiBaseUrl}/${user.image_path}` 
+            : (user.isPatient ? 'https://cdn-icons-png.flaticon.com/512/3237/3237497.png' : 'https://cdn-icons-png.flaticon.com/512/149/149071.png');
+
           const icon = L.icon({ 
             iconUrl: iconUrl, 
             iconSize:[50,50], 
@@ -224,7 +229,7 @@ export default {
           const marker = L.marker([user.latitude, user.longitude], { icon: icon });
           const popupContent = `
             <div class="popup-content">
-              <h3>${user.first_name} ${user.last_name}</h3>
+              <h3>${user.first_name} ${user.last_name || ''}</h3>
               ${user.isPatient && user.image_path ? `<img src="${apiBaseUrl}/${user.image_path}" alt="รูปผู้ป่วย" class="popup-image">` : ''}
               <p><strong>ที่อยู่:</strong> ${user.address}</p>
               ${user.isPatient && user.community_health_worker ? `<p><strong>อสม.ที่รับผิดชอบ:</strong> ${user.community_health_worker}</p>` : ''}
@@ -249,8 +254,9 @@ export default {
 
   mounted() {
     this.initMap();
-    this.fetchUsers();
-    this.fetchPatients();
+    // ▼▼▼ แก้ไข: เรียกใช้ฟังก์ชันใหม่ที่เราสร้างขึ้น ▼▼▼
+    this.loadMapData();
+    // ▲▲▲ สิ้นสุดการแก้ไข ▲▲▲
 
     const lat = parseFloat(this.$route.query.lat);
     const lng = parseFloat(this.$route.query.lng);
