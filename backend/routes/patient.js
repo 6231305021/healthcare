@@ -29,18 +29,21 @@ const upload = multer({
 });
 
 // -------------------- Helpers --------------------
-const convertUndefinedToNull = (value) => (value === undefined ? null : value);
+const convertUndefinedToNull = (value) => (value === undefined || value === '' ? null : value);
 const formatImagePath = (file) => (file ? path.join('uploads', 'patients', path.basename(file.path)) : null);
 
 // -------------------- Routes --------------------
 
 // Create patient
 router.post('/', upload.single('patientImage'), async (req, res) => {
+  // ▼▼▼ แก้ไข: เพิ่ม benefits ▼▼▼
   const {
     name, age, gender, race, nationality, occupation, illness_info,
     province, district, subdistrict, address_detail, latitude, longitude,
-    community_health_worker
+    community_health_worker,
+    benefits // <-- 1. รับค่า benefits จากฟอร์ม
   } = req.body;
+  // ▲▲▲ สิ้นสุดการแก้ไข ▲▲▲
 
   if (!name || !age || !gender || !race || !nationality || !occupation || !province || !district || latitude === undefined || longitude === undefined) {
     return res.status(400).json({ message: 'ข้อมูลไม่ครบถ้วน: กรุณากรอกข้อมูลที่จำเป็นทั้งหมด' });
@@ -48,11 +51,12 @@ router.post('/', upload.single('patientImage'), async (req, res) => {
 
   try {
     const imagePath = formatImagePath(req.file);
+    // ▼▼▼ แก้ไข: เพิ่ม benefits ในคำสั่ง SQL ▼▼▼
     const [result] = await db.query(
       `INSERT INTO patients
         (name, age, gender, race, nationality, occupation, illness_info,
-         province, district, subdistrict, address_detail, latitude, longitude, image_path, community_health_worker, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+         province, district, subdistrict, address_detail, latitude, longitude, image_path, community_health_worker, benefits, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`, // <-- 2. เพิ่ม benefits ในคอลัมน์และ VALUES
       [
         name, age, gender, race, nationality, occupation,
         convertUndefinedToNull(illness_info),
@@ -60,9 +64,11 @@ router.post('/', upload.single('patientImage'), async (req, res) => {
         convertUndefinedToNull(address_detail),
         latitude, longitude,
         imagePath,
-        convertUndefinedToNull(community_health_worker)
+        convertUndefinedToNull(community_health_worker),
+        convertUndefinedToNull(benefits) // <-- 3. เพิ่มค่า benefits ที่จะใส่ลงฐานข้อมูล
       ]
     );
+    // ▲▲▲ สิ้นสุดการแก้ไข ▲▲▲
 
     res.status(201).json({ message: 'บันทึกข้อมูลผู้ป่วยสำเร็จ', patientId: result.insertId, imagePath });
   } catch (err) {
@@ -98,11 +104,14 @@ router.get('/:id', async (req, res) => {
 // Update patient
 router.put('/:id', upload.single('patientImage'), async (req, res) => {
   const { id } = req.params;
+  // ▼▼▼ แก้ไข: เพิ่ม benefits ▼▼▼
   const {
     name, age, gender, race, nationality, occupation, illness_info,
     province, district, subdistrict, address_detail, latitude, longitude,
-    community_health_worker
+    community_health_worker,
+    benefits // <-- 1. รับค่า benefits จากฟอร์ม
   } = req.body;
+  // ▲▲▲ สิ้นสุดการแก้ไข ▲▲▲
 
   if (!name || !age || !gender || !race || !nationality || !occupation || !province || !district || latitude === undefined || longitude === undefined) {
     return res.status(400).json({ message: 'ข้อมูลไม่ครบถ้วน: กรุณากรอกข้อมูลที่จำเป็นทั้งหมด' });
@@ -121,12 +130,13 @@ router.put('/:id', upload.single('patientImage'), async (req, res) => {
       imagePath = formatImagePath(req.file);
     }
 
+    // ▼▼▼ แก้ไข: เพิ่ม benefits ในคำสั่ง SQL ▼▼▼
     const [result] = await db.query(
       `UPDATE patients SET
         name = ?, age = ?, gender = ?, race = ?, nationality = ?, occupation = ?, illness_info = ?,
         province = ?, district = ?, subdistrict = ?, address_detail = ?,
-        latitude = ?, longitude = ?, image_path = ?, community_health_worker = ?
-      WHERE id = ?`,
+        latitude = ?, longitude = ?, image_path = ?, community_health_worker = ?, benefits = ?
+        WHERE id = ?`, // <-- 2. เพิ่ม benefits = ? ในคำสั่ง UPDATE
       [
         name, age, gender, race, nationality, occupation,
         convertUndefinedToNull(illness_info),
@@ -135,9 +145,11 @@ router.put('/:id', upload.single('patientImage'), async (req, res) => {
         latitude, longitude,
         imagePath,
         convertUndefinedToNull(community_health_worker),
+        convertUndefinedToNull(benefits), // <-- 3. เพิ่มค่า benefits ที่จะอัปเดต
         id
       ]
     );
+    // ▲▲▲ สิ้นสุดการแก้ไข ▲▲▲
 
     res.json({ message: 'อัปเดตข้อมูลผู้ป่วยสำเร็จ', imagePath });
   } catch (err) {

@@ -178,7 +178,16 @@
                         color="#2ecc71"
                         class="custom-field"
                       />
-                    </v-col>
+                      <v-text-field
+                        v-model="benefits"
+                        label="สิทธิ์การรักษา"
+                        outlined
+                        dense
+                        prepend-icon="mdi-shield-account"
+                        color="#2ecc71"
+                        class="custom-field"
+                      />
+                      </v-col>
                   </v-row>
                 </v-card>
 
@@ -390,12 +399,15 @@ export default {
       district: '',
       latitude: '',
       longitude: '',
+      // ▼▼▼ เพิ่มโค้ด: เพิ่มตัวแปร benefits ▼▼▼
+      benefits: '', 
+      // ▲▲▲ สิ้นสุดการเพิ่มโค้ด ▲▲▲
       valid: false,
       loading: false,
       map: null,
       marker: null,
       genderOptions: ['ชาย', 'หญิง', 'อื่นๆ'],
-      patientImage: null, // แก้ไขให้เป็น null สำหรับ Vuetify 2
+      patientImage: null,
       imagePreview: null,
       snackbar: {
         show: false,
@@ -414,7 +426,6 @@ export default {
   },
   methods: {
     initMap() {
-      // ตรวจสอบว่า map ถูกสร้างไปแล้วหรือยัง
       if (this.map) {
         this.map.remove();
       }
@@ -457,7 +468,7 @@ export default {
             format: 'json',
             addressdetails: 1,
             limit: 1,
-            'accept-language': 'th-TH' // เพิ่มเพื่อให้ผลลัพธ์เป็นภาษาไทย
+            'accept-language': 'th-TH'
           },
         });
 
@@ -512,6 +523,10 @@ export default {
         formData.append('address_detail', this.address_detail);
         formData.append('latitude', this.latitude);
         formData.append('longitude', this.longitude);
+        
+        // ▼▼▼ เพิ่มโค้ด: เพิ่ม benefits ลงใน FormData ▼▼▼
+        formData.append('benefits', this.benefits);
+        // ▲▲▲ สิ้นสุดการเพิ่มโค้ด ▲▲▲
         
         if (this.patientImage) {
           formData.append('patientImage', this.patientImage);
