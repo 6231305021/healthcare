@@ -10,7 +10,6 @@
           </v-card-title>
 
           <v-form ref="form" v-model="valid" lazy-validation>
-            <!-- ข้อมูลส่วนตัว -->
             <v-card flat class="pa-3 mb-4 rounded-lg" style="background: linear-gradient(to right, #ffffff, #f0f7ff); border: 1px solid #e3f2fd;">
               <v-subheader class="font-weight-bold" style="color: #2980b9;">
                 <v-icon left color="#3498db">mdi-account</v-icon>
@@ -18,75 +17,18 @@
               </v-subheader>
               <v-row dense>
                 <v-col cols="12" md="6">
-                  <v-text-field 
-                    v-model="patient.name" 
-                    label="ชื่อ-สกุล" 
-                    :rules="[rules.required]" 
-                    outlined 
-                    dense
-                    prepend-icon="mdi-account"
-                    color="#3498db"
-                    class="custom-field"
-                  />
-                  <v-text-field 
-                    v-model="patient.age" 
-                    label="อายุ" 
-                    :rules="[rules.required, rules.number]" 
-                    outlined 
-                    dense
-                    prepend-icon="mdi-calendar"
-                    color="#3498db"
-                    class="custom-field"
-                  />
-                  <v-select 
-                    v-model="patient.gender" 
-                    :items="genderOptions" 
-                    label="เพศ" 
-                    :rules="[rules.required]" 
-                    outlined 
-                    dense
-                    prepend-icon="mdi-gender-male-female"
-                    color="#3498db"
-                    class="custom-field"
-                  />
+                  <v-text-field v-model="patient.name" label="ชื่อ-สกุล" :rules="[rules.required]" outlined dense prepend-icon="mdi-account" color="#3498db" class="custom-field" />
+                  <v-text-field v-model="patient.age" label="อายุ" :rules="[rules.required, rules.number]" outlined dense prepend-icon="mdi-calendar" color="#3498db" class="custom-field" />
+                  <v-select v-model="patient.gender" :items="genderOptions" label="เพศ" :rules="[rules.required]" outlined dense prepend-icon="mdi-gender-male-female" color="#3498db" class="custom-field" />
                 </v-col>
-
                 <v-col cols="12" md="6">
-                  <v-text-field 
-                    v-model="patient.race" 
-                    label="เชื้อชาติ" 
-                    :rules="[rules.required]" 
-                    outlined 
-                    dense
-                    prepend-icon="mdi-flag"
-                    color="#3498db"
-                    class="custom-field"
-                  />
-                  <v-text-field 
-                    v-model="patient.nationality" 
-                    label="สัญชาติ" 
-                    :rules="[rules.required]" 
-                    outlined 
-                    dense
-                    prepend-icon="mdi-earth"
-                    color="#3498db"
-                    class="custom-field"
-                  />
-                  <v-text-field 
-                    v-model="patient.occupation" 
-                    label="อาชีพ" 
-                    :rules="[rules.required]" 
-                    outlined 
-                    dense
-                    prepend-icon="mdi-briefcase"
-                    color="#3498db"
-                    class="custom-field"
-                  />
+                  <v-text-field v-model="patient.race" label="เชื้อชาติ" :rules="[rules.required]" outlined dense prepend-icon="mdi-flag" color="#3498db" class="custom-field" />
+                  <v-text-field v-model="patient.nationality" label="สัญชาติ" :rules="[rules.required]" outlined dense prepend-icon="mdi-earth" color="#3498db" class="custom-field" />
+                  <v-text-field v-model="patient.occupation" label="อาชีพ" :rules="[rules.required]" outlined dense prepend-icon="mdi-briefcase" color="#3498db" class="custom-field" />
                 </v-col>
               </v-row>
             </v-card>
 
-            <!-- ข้อมูลการดูแล -->
             <v-card flat class="pa-3 mb-4 rounded-lg" style="background: linear-gradient(to right, #ffffff, #f0fff4); border: 1px solid #e8f5e9;">
               <v-subheader class="font-weight-bold" style="color: #27ae60;">
                 <v-icon left color="#2ecc71">mdi-medical-bag</v-icon>
@@ -94,31 +36,24 @@
               </v-subheader>
               <v-row dense>
                 <v-col cols="12" md="6">
-                  <v-textarea 
-                    v-model="patient.illness_info" 
-                    label="รายละเอียดการเจ็บป่วย" 
-                    outlined 
-                    rows="3"
-                    prepend-icon="mdi-heart-pulse"
-                    color="#2ecc71"
-                    class="custom-field"
-                  />
+                  <v-textarea v-model="patient.illness_info" label="รายละเอียดการเจ็บป่วย" outlined rows="3" prepend-icon="mdi-heart-pulse" color="#2ecc71" class="custom-field" />
                 </v-col>
                 <v-col cols="12" md="6">
+                  <v-text-field v-model="patient.community_health_worker" label="อสม.ที่รับผิดชอบ" outlined dense prepend-icon="mdi-account-group" color="#2ecc71" class="custom-field" />
+                  
                   <v-text-field 
-                    v-model="patient.community_health_worker" 
-                    label="อสม.ที่รับผิดชอบ" 
+                    v-model="patient.Benefits" 
+                    label="สิทธิการรักษา" 
                     outlined 
                     dense
-                    prepend-icon="mdi-account-group"
+                    prepend-icon="mdi-shield-check"
                     color="#2ecc71"
                     class="custom-field"
                   />
-                </v-col>
+                  </v-col>
               </v-row>
             </v-card>
 
-            <!-- รูปภาพผู้ป่วย -->
             <v-card flat class="pa-3 mb-4 rounded-lg" style="background: linear-gradient(to right, #ffffff, #fff8e1); border: 1px solid #fff3e0;">
               <v-subheader class="font-weight-bold" style="color: #f39c12;">
                 <v-icon left color="#f1c40f">mdi-camera</v-icon>
@@ -158,7 +93,6 @@
               </v-row>
             </v-card>
 
-            <!-- ที่อยู่และพิกัด -->
             <v-card flat class="pa-3 mb-4 rounded-lg" style="background: linear-gradient(to right, #ffffff, #f3e5f5); border: 1px solid #f3e5f5;">
               <v-subheader class="font-weight-bold" style="color: #8e44ad;">
                 <v-icon left color="#9b59b6">mdi-map-marker</v-icon>
@@ -167,60 +101,23 @@
 
               <v-row dense class="mb-3">
                 <v-col cols="12" md="4">
-                  <v-text-field 
-                    v-model="patient.province" 
-                    label="จังหวัด" 
-                    outlined 
-                    dense
-                    prepend-icon="mdi-map"
-                    color="#9b59b6"
-                    class="custom-field"
-                  />
+                  <v-text-field v-model="patient.province" label="จังหวัด" outlined dense prepend-icon="mdi-map" color="#9b59b6" class="custom-field" />
                 </v-col>
                 <v-col cols="12" md="4">
-                  <v-text-field 
-                    v-model="patient.district" 
-                    label="อำเภอ" 
-                    outlined 
-                    dense
-                    prepend-icon="mdi-map"
-                    color="#9b59b6"
-                    class="custom-field"
-                  />
+                  <v-text-field v-model="patient.district" label="อำเภอ" outlined dense prepend-icon="mdi-map" color="#9b59b6" class="custom-field" />
                 </v-col>
                 <v-col cols="12" md="4">
-                  <v-text-field 
-                    v-model="patient.subdistrict" 
-                    label="ตำบล" 
-                    outlined 
-                    dense
-                    prepend-icon="mdi-map"
-                    color="#9b59b6"
-                    class="custom-field"
-                  />
+                  <v-text-field v-model="patient.subdistrict" label="ตำบล" outlined dense prepend-icon="mdi-map" color="#9b59b6" class="custom-field" />
                 </v-col>
               </v-row>
 
               <v-row dense class="mb-3">
                 <v-col cols="12">
-                  <v-text-field 
-                    v-model="patient.address_detail" 
-                    label="ที่อยู่โดยละเอียด" 
-                    outlined 
-                    dense
-                    prepend-icon="mdi-home"
-                    color="#9b59b6"
-                    class="custom-field"
-                  />
+                  <v-text-field v-model="patient.address_detail" label="ที่อยู่โดยละเอียด" outlined dense prepend-icon="mdi-home" color="#9b59b6" class="custom-field" />
                 </v-col>
               </v-row>
 
-              <v-btn 
-                @click="searchLocation" 
-                color="#9b59b6"
-                class="mb-3 white--text"
-                elevation="2"
-              >
+              <v-btn @click="searchLocation" color="#9b59b6" class="mb-3 white--text" elevation="2">
                 <v-icon left>mdi-map-search</v-icon>
                 ค้นหาตำแหน่งจากจังหวัด/อำเภอ/ตำบล
               </v-btn>
@@ -229,57 +126,24 @@
 
               <v-row dense>
                 <v-col cols="12" md="6">
-                  <v-text-field 
-                    v-model="patient.latitude" 
-                    label="ละติจูด" 
-                    readonly 
-                    outlined 
-                    dense
-                    prepend-icon="mdi-latitude"
-                    color="#9b59b6"
-                    class="custom-field"
-                  />
+                  <v-text-field v-model="patient.latitude" label="ละติจูด" readonly outlined dense prepend-icon="mdi-latitude" color="#9b59b6" class="custom-field" />
                 </v-col>
                 <v-col cols="12" md="6">
-                  <v-text-field 
-                    v-model="patient.longitude" 
-                    label="ลองจิจูด" 
-                    readonly 
-                    outlined 
-                    dense
-                    prepend-icon="mdi-longitude"
-                    color="#9b59b6"
-                    class="custom-field"
-                  />
+                  <v-text-field v-model="patient.longitude" label="ลองจิจูด" readonly outlined dense prepend-icon="mdi-longitude" color="#9b59b6" class="custom-field" />
                 </v-col>
               </v-row>
             </v-card>
 
-            <!-- ปุ่มดำเนินการ -->
             <v-card flat class="pa-3 rounded-lg" style="background: linear-gradient(to right, #ffffff, #e8eaf6); border: 1px solid #e8eaf6;">
               <v-row>
                 <v-col cols="12" md="6">
-                  <v-btn 
-                    block 
-                    color="#4CAF50"
-                    :loading="loading" 
-                    :disabled="!valid" 
-                    @click="updatePatient"
-                    class="mb-2 white--text"
-                    elevation="2"
-                  >
+                  <v-btn block color="#4CAF50" :loading="loading" :disabled="!valid" @click="updatePatient" class="mb-2 white--text" elevation="2">
                     <v-icon left>mdi-check</v-icon> 
                     บันทึกการแก้ไข
                   </v-btn>
                 </v-col>
                 <v-col cols="12" md="6">
-                  <v-btn 
-                    block 
-                    color="#607D8B"
-                    @click="$router.back()"
-                    class="white--text"
-                    elevation="2"
-                  >
+                  <v-btn block color="#607D8B" @click="$router.back()" class="white--text" elevation="2">
                     <v-icon left>mdi-arrow-left</v-icon> 
                     กลับ
                   </v-btn>
@@ -307,7 +171,7 @@ import 'leaflet/dist/leaflet.css';
 import axios from 'axios';
 import { showSuccessAlert, showErrorAlert, showWarningAlert, showConfirmDialog, showLoading, closeLoading } from '../utils/sweetAlert';
 
-const API_PATIENT = import.meta.env.VITE_API_PATIENT; // ประกาศตัวแปร API ให้ใช้ใน template ได้
+const API_PATIENT = import.meta.env.VITE_API_PATIENT;
 
 export default {
   data() {
@@ -321,6 +185,7 @@ export default {
         occupation: '',
         community_health_worker: '',
         illness_info: '',
+        Benefits: '', // <-- เพิ่ม Benefits (B ตัวใหญ่) เข้าไปใน data model
         province: '',
         district: '',
         subdistrict: '',
@@ -337,11 +202,7 @@ export default {
       map: null,
       marker: null,
       genderOptions: ['ชาย', 'หญิง', 'อื่นๆ'],
-      snackbar: {
-        show: false,
-        text: '',
-        color: '',
-      },
+      snackbar: { show: false, text: '', color: '' },
       rules: {
         required: v => !!v || 'กรุณากรอกข้อมูล',
         number: v => /^\d+$/.test(v) || 'กรุณากรอกตัวเลขเท่านั้น',
@@ -453,14 +314,8 @@ export default {
         return;
       }
 
-      const result = await showConfirmDialog(
-        'ยืนยันการแก้ไขข้อมูล',
-        'คุณต้องการบันทึกการแก้ไขข้อมูลผู้ป่วยใช่หรือไม่?'
-      );
-
-      if (!result.isConfirmed) {
-        return;
-      }
+      const result = await showConfirmDialog('ยืนยันการแก้ไขข้อมูล', 'คุณต้องการบันทึกการแก้ไขข้อมูลผู้ป่วยใช่หรือไม่?');
+      if (!result.isConfirmed) return;
 
       this.loading = true;
       showLoading('กำลังบันทึกข้อมูล...');
@@ -470,7 +325,7 @@ export default {
         const formData = new FormData();
         
         Object.keys(this.patient).forEach(key => {
-          if (key !== 'image_path') {
+          if (key !== 'image_path' && this.patient[key] !== null) {
             formData.append(key, this.patient[key]);
           }
         });
@@ -480,9 +335,7 @@ export default {
         }
 
         const res = await axios.put(`${API_PATIENT}${patientId}`, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
+          headers: { 'Content-Type': 'multipart/form-data' }
         });
 
         if (res.data.message) {
@@ -506,36 +359,15 @@ export default {
 .custom-field {
   transition: all 0.3s ease;
 }
-
 .custom-field:hover {
   transform: translateY(-2px);
 }
-
 .v-card {
   transition: all 0.3s ease;
 }
-
 .v-card:hover {
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
-
-#map {
-  transition: all 0.3s ease;
-}
-
-#map:hover {
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-.v-btn {
-  transition: all 0.3s ease;
-}
-
-.v-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-}
-
 .background-image {
   position: fixed;
   top: 0;

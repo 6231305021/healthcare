@@ -34,8 +34,14 @@
                 <v-form ref="appointmentForm" v-model="valid" lazy-validation>
                   <v-row>
                     <v-col cols="12" md="6">
-                      <v-text-field v-model="newAppointment.hn_number" label="HN (Patient ID)" prepend-icon="mdi-identifier" readonly outlined dense />
-                    </v-col>
+                      <v-text-field 
+                        v-model="newAppointment.hn_number" 
+                        label="HN (Patient ID)" 
+                        prepend-icon="mdi-identifier" 
+                        outlined 
+                        dense 
+                      />
+                      </v-col>
                     <v-col cols="12" md="6">
                       <v-text-field v-model="newAppointment.rights" label="สิทธิการรักษา" prepend-icon="mdi-shield-account" outlined dense clearable />
                     </v-col>
