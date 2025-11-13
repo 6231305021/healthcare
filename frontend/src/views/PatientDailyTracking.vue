@@ -86,7 +86,7 @@
                 </v-col>
 
                 <v-col cols="12" sm="6" md="6">
-                   <v-menu v-model="timeMenu" :close-on-content-click="false" transition="scale-transition" offset-y min-width="290px">
+                  <v-menu v-model="timeMenu" :close-on-content-click="false" transition="scale-transition" offset-y min-width="290px">
                     <template v-slot:activator="{ props }">
                       <v-text-field v-model="timePicker" label="เวลาบันทึก" prepend-icon="mdi-clock" readonly v-bind="props"/>
                     </template>
@@ -124,7 +124,6 @@
           <v-col cols="12" md="6">
             <v-card class="pa-5">
               <v-card-title class="text-h6">กราฟอุณหภูมิ (°C)</v-card-title>
-              <!-- บรรทัด 361: ที่เกิด error ใน console -->
               <line-chart :chart-data="chartData.temperature" :chart-options="chartOptions.temperature" />
             </v-card>
           </v-col>
@@ -165,7 +164,8 @@ import Swal from 'sweetalert2';
 import dayjs from 'dayjs';
 import buddhistEra from 'dayjs/plugin/buddhistEra';
 import 'dayjs/locale/th'; 
-import { ref, onMounted, watch, defineComponent } from 'vue';
+// 🔴 การแก้ไข: เพิ่ม onUnmounted เข้ามา
+import { ref, onMounted, watch, defineComponent, onUnmounted } from 'vue'; 
 // ตรวจสอบให้แน่ใจว่า Chart.js ถูกนำเข้าอย่างครบถ้วน
 import { Chart, LineController, LineElement, PointElement, LinearScale, CategoryScale, Title, Tooltip, Legend } from 'chart.js';
 
@@ -193,10 +193,11 @@ const LineChart = defineComponent({
     let chartInstance = null;
 
     const renderChart = () => {
-      if (!chartRef.value) return;
+      // 🟢 การตรวจสอบ Canvas ที่เข้มงวดขึ้น
+      if (!chartRef.value || !(chartRef.value instanceof HTMLCanvasElement)) return;
       const ctx = chartRef.value.getContext('2d');
       
-      // ทำลายอินสแตนซ์เก่าก่อนสร้างใหม่เสมอ
+      // ทำลายอินสแตนซ์เก่าก่อนสร้างใหม่เสมอ (ป้องกัน "Chart is already initialized")
       if (chartInstance) {
         chartInstance.destroy(); 
         chartInstance = null; 
@@ -219,8 +220,15 @@ const LineChart = defineComponent({
 
     onMounted(() => renderChart());
     
-    // **✅ การแก้ไข:** ลบ { deep: true } เพื่อป้องกันวงวนการอัปเดตแบบวนซ้ำ
-    // เราจะเฝ้าดูแค่การเปลี่ยน Reference ของ Object เท่านั้น (ซึ่งเพียงพอเพราะ Parent Component สร้าง Object ใหม่)
+    // 🟢 การแก้ไข: เพิ่ม onUnmounted เพื่อทำความสะอาดเมื่อคอมโพเนนต์ถูกถอดออก/ทำลาย
+    onUnmounted(() => {
+        if (chartInstance) {
+            chartInstance.destroy();
+            chartInstance = null;
+        }
+    });
+    
+    // Watch props: เมื่อ chartData/chartOptions เปลี่ยน (Parent component สร้าง Object ใหม่) ให้ render ใหม่
     watch(() => props.chartData, () => renderChart()); 
     watch(() => props.chartOptions, () => renderChart());
     
@@ -241,7 +249,7 @@ export default {
         maintainAspectRatio:false, 
         plugins: { legend: { display: true } },
         scales: { 
-          // เปลี่ยน 'x' เป็น 'xAxis' ใน Chart.js V3+
+            // เปลี่ยน 'x' เป็น 'xAxis' ใน Chart.js V3+
             xAxis: { display: true, title: { display: true, text: 'วันที่/เวลา' } },
             y: { display: true, title: { display: true, text: 'ค่า' }, beginAtZero: false }
         }
@@ -351,11 +359,16 @@ export default {
         // สมมติว่า VITE_API_TRACKING เป็น URL พื้นฐานสำหรับดึงข้อมูลการติดตาม
         const res = await axios.get(`${import.meta.env.VITE_API_TRACKING}/patient/${this.patientId}`, { headers });
         this.dailyTrackingData = Array.isArray(res.data) ? res.data : []; 
-        this.updateChart(); 
+        // 🟢 เพิ่ม $nextTick เพื่อให้แน่ใจว่า DOM ถูกอัปเดตก่อนการสร้างกราฟ
+        this.$nextTick(() => {
+            this.updateChart(); 
+        });
       } catch(err){
         console.error(err);
         this.dailyTrackingData=[];
-        this.updateChart(); 
+        this.$nextTick(() => {
+            this.updateChart(); 
+        });
       } finally{ this.loadingData=false; }
     },
     /**
